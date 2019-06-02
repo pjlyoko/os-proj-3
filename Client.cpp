@@ -1,4 +1,3 @@
-
 #include "Client.h"
 
 Client::Client() {
@@ -6,8 +5,7 @@ Client::Client() {
     breaks = 500000;
 }
 
-Client::Client(int numb, mutex* mutexChairs, bool* chairs, mutex* mutexOrdersList, vector<Order*>* ordersList)
-{
+Client::Client(int numb, mutex *mutexChairs, bool *chairs, mutex *mutexOrdersList, vector<Order *> *ordersList) {
     this->numb = numb;
     this->mutexOrdersList = mutexOrdersList;
     this->ordersList = ordersList;
@@ -19,7 +17,7 @@ Client::Client(int numb, mutex* mutexChairs, bool* chairs, mutex* mutexOrdersLis
     threadC = new thread(&Client::threadClient, this);
 }
 
-Client::Client(const Client& orig) {
+Client::Client(const Client &orig) {
 }
 
 Client::~Client() {
@@ -27,9 +25,9 @@ Client::~Client() {
     delete threadC;
 }
 
-void Client::print_queue(queue<Order*> q) {
+void Client::print_queue(queue<Order *> q) {
     int i = 0;
-    queue<Order*> *que = new queue<Order*>(q);
+    queue<Order *> *que = new queue<Order *>(q);
     while (!que->empty()) {
         mvprintw(1, 50 + 3 * i, "%d", que->front()->getClient());
         i++;
@@ -41,27 +39,27 @@ void Client::print_queue(queue<Order*> q) {
 
 void Client::threadClient() {
     bool haveChair;
-    vector <int> ingredients;
+    vector<int> ingredients;
     chrono::_V2::steady_clock::time_point begin, dur;
     float eatTime;
     Order *order;
 
-    int chairsSize = 10; 
-    
+    int chairsSize = 10;
+
     while (!end) {
         haveChair = false;
-        pizza = NULL;
+        pizza = nullptr;
         eatTime = 1 + rand() % 3;
-        
+
         usleep(breaks);
-        
+
         //Siadanie
         while (!haveChair && !end) {
             mvprintw(10 + numb, 0, "Klient %d: Szuka miejsca do siedzenia\0", numb);
             usleep(breaks);
             while (!mutexChairs->try_lock() && !end);
 
-            for (int i = 0; i<chairsSize; i++) {
+            for (int i = 0; i < chairsSize; i++) {
                 if (chairs[i]) {
                     haveChair = true;
                     chairs[i] = false;
@@ -85,26 +83,26 @@ void Client::threadClient() {
         while (!mutexOrdersList->try_lock() && !end);
 
         ingredients.push_back(0); //ciasto i inne składniki
-        int numberOfIngredients = rand()%4+3;
-        for (int i = 1; i<numberOfIngredients; i++) {
-            ingredients.push_back(rand() % 9  +1);
+        int numberOfIngredients = rand() % 4 + 3;
+        for (int i = 1; i < numberOfIngredients; i++) {
+            ingredients.push_back(rand() % 9 + 1);
         }
 
         order = new Order(numb, rand() % 2 + 1, ingredients);
         ordersList->push_back(order);
-        
+
         ingredients.clear();
         for (int i = 0; i < 20; i++)
             mvprintw(1, 50 + 3 * i, "   ");
         mvprintw(0, 50, "Zamowienia\0");
-        for(int i =0 ; i< ordersList->size(); i++)
-            mvprintw(1, 50+3*i, "%d", ordersList->operator[](i)->getClient());
+        for (int i = 0; i < ordersList->size(); i++)
+            mvprintw(1, 50 + 3 * i, "%d", ordersList->operator[](i)->getClient());
 
         mutexOrdersList->unlock();
         usleep(breaks);
-        
+
         //Czekanie
-        while (pizza == NULL && !end) {
+        while (pizza == nullptr && !end) {
             mvprintw(10 + numb, 0, "Klient %d: Czeka na pizze           \0", numb);
             usleep(breaks);
         }
@@ -114,7 +112,8 @@ void Client::threadClient() {
         dur = chrono::steady_clock::now();
 
         while (chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < eatTime && !end) {
-            mvprintw(numb+10, 0, "Klient %d: Je %d %%                \0", numb, (int) round(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / eatTime * 100));
+            mvprintw(numb + 10, 0, "Klient %d: Je %d %%                \0", numb, (int) round(
+                    chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / eatTime * 100));
 
             usleep(breaks);
             dur = chrono::steady_clock::now();
@@ -126,7 +125,7 @@ void Client::threadClient() {
             usleep(breaks);
             while (!mutexChairs->try_lock() && !end);
 
-            for (int i = 0; i<chairsSize; i++) {
+            for (int i = 0; i < chairsSize; i++) {
                 if (!chairs[i]) {
                     haveChair = false;
                     chairs[i] = true;
@@ -142,7 +141,7 @@ void Client::threadClient() {
                 break;
             mutexChairs->unlock();
         }
-        
+
     }
 
 }

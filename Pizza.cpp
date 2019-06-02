@@ -1,10 +1,9 @@
-
 #include "Pizza.h"
 
 Pizza::Pizza() {
 }
 
-Pizza::Pizza(const Pizza& orig) {
+Pizza::Pizza(const Pizza &orig) {
 }
 
 Pizza::Pizza(int c) {

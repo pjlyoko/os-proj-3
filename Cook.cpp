@@ -6,7 +6,9 @@ Cook::Cook() {
 
 }
 
-Cook::Cook(int numb, mutex* mutexOrdersList, vector<Order*>* ordersList, mutex* mutexFridge, int* fridge, mutex* mutexTools, bool* tools, mutex* mutexFurnances, int* furnances, mutex* mutexCountertop, Pizza**countertop) {
+Cook::Cook(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList, mutex *mutexFridge, int *fridge,
+           mutex *mutexTools, bool *tools, mutex *mutexFurnances, int *furnace, mutex *mutexCountertop,
+           Pizza **countertop) {
     this->numb = numb;
     this->mutexOrdersList = mutexOrdersList;
     this->ordersList = ordersList;
@@ -15,7 +17,7 @@ Cook::Cook(int numb, mutex* mutexOrdersList, vector<Order*>* ordersList, mutex* 
     this->mutexTools = mutexTools;
     this->tools = tools;
     this->mutexFurnances = mutexFurnances;
-    this->furnances = furnances;
+    this->furnances = furnace;
     this->mutexCountertop = mutexCountertop;
     this->countertop = countertop;
 
@@ -24,7 +26,7 @@ Cook::Cook(int numb, mutex* mutexOrdersList, vector<Order*>* ordersList, mutex* 
     threadC = new thread(&Cook::threadCook, this);
 }
 
-Cook::Cook(const Cook& orig) {
+Cook::Cook(const Cook &orig) {
 }
 
 Cook::~Cook() {
@@ -42,8 +44,8 @@ void Cook::threadCook() {
     chrono::_V2::steady_clock::time_point begin, dur;
     Order *order;
 
-    int fridgeSize =10, counterSize = 10, toolsSize = 4, furnancesSize = 5;
-    
+    int fridgeSize = 10, counterSize = 10, toolsSize = 4, furnancesSize = 5;
+
     while (!end) {
 
         allIngredients = false;
@@ -60,13 +62,13 @@ void Cook::threadCook() {
 
             order = ordersList->front();
 
-            for (int i = 0; i<order->getIngredients().size(); i++) {
+            for (int i = 0; i < order->getIngredients().size(); i++) {
                 ingredients.push_back(order->getIngredients()[i]);
             }
 
             client = order->getClient();
             size = order->getSize();
-            order = NULL;
+            order = nullptr;
             ordersList->erase(ordersList->begin());
 
             mvprintw(0, 50, "Zamowienia\0");
@@ -88,7 +90,7 @@ void Cook::threadCook() {
                     mvprintw(6, 50 + 3 * i, "%d", fridge[i]);
                 }
 
-                for (i = 0; i< ingredients.size(); i++) {
+                for (i = 0; i < ingredients.size(); i++) {
                     if (fridge[ingredients[i]] <= 0) {
                         mvprintw(numb, 0, "Kucharz %d: Brak skladnikow na pizze          \0", numb);
                         mutexFridge->unlock();
@@ -97,7 +99,7 @@ void Cook::threadCook() {
                 }
                 if (i >= ingredients.size()) {
                     allIngredients = true;
-                    for (i = 0; i< ingredients.size(); i++) {
+                    for (i = 0; i < ingredients.size(); i++) {
                         fridge[ingredients[i]]--;
                     }
                     mvprintw(5, 50, "Lodowka\0");
@@ -117,7 +119,7 @@ void Cook::threadCook() {
                 mvprintw(numb, 0, "Kucharz %d: podnosi narzedzia               \0", numb);
                 while (!mutexTools->try_lock() && !end);
 
-                for (int i = 0; i< toolsSize; i++) {
+                for (int i = 0; i < toolsSize; i++) {
                     if (tools[i]) {
                         haveTools = true;
                         tools[i] = false;
@@ -142,7 +144,8 @@ void Cook::threadCook() {
             dur = chrono::steady_clock::now();
 
             while (chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < preparingTime && !end) {
-                mvprintw(numb, 0, "Kucharz %d: Przygotowuje pizze %d %%            \0", numb, (int) round(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / preparingTime * 100));
+                mvprintw(numb, 0, "Kucharz %d: Przygotowuje pizze %d %%            \0", numb, (int) round(
+                        chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / preparingTime * 100));
 
                 usleep(breaks);
                 dur = chrono::steady_clock::now();
@@ -154,7 +157,7 @@ void Cook::threadCook() {
                 usleep(breaks);
                 while (!mutexTools->try_lock() && !end);
 
-                for (int i = 0; i< toolsSize; i++) {
+                for (int i = 0; i < toolsSize; i++) {
                     if (!tools[i]) {
                         haveTools = false;
                         tools[i] = true;
@@ -179,7 +182,7 @@ void Cook::threadCook() {
                 while (!mutexFurnances->try_lock() && !end) {
                     mvprintw(numb, 0, "Kucharz %d: Wklada pizze do pieca          \0", numb);
                 }
-                for (int i = 0; i< furnancesSize; i++) {
+                for (int i = 0; i < furnancesSize; i++) {
                     if (furnances[i] >= size) {
                         haveFurnance = true;
                         furnances[i] -= size;
@@ -203,7 +206,8 @@ void Cook::threadCook() {
             dur = chrono::steady_clock::now();
 
             while (chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < bakeTime && !end) {
-                mvprintw(numb, 0, "Kucharz %d: Piecze pizze %d %%           \0", numb, (int) round(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / bakeTime * 100));
+                mvprintw(numb, 0, "Kucharz %d: Piecze pizze %d %%           \0", numb, (int) round(
+                        chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / bakeTime * 100));
 
                 usleep(breaks);
                 dur = chrono::steady_clock::now();
@@ -214,7 +218,7 @@ void Cook::threadCook() {
                 usleep(breaks);
                 while (!mutexFurnances->try_lock() && !end);
 
-                for (int i = 0; i< furnancesSize; i++) {
+                for (int i = 0; i < furnancesSize; i++) {
                     if (furnances[i] <= 2 - size) {
                         haveFurnance = false;
                         furnances[i] += size;
@@ -238,8 +242,8 @@ void Cook::threadCook() {
                 usleep(breaks);
                 while (!mutexCountertop->try_lock() && !end);
 
-                for (int i = 0; i< counterSize; i++) {
-                    if (countertop[i] == NULL) {
+                for (int i = 0; i < counterSize; i++) {
+                    if (countertop[i] == nullptr) {
                         havePlace = true;
                         countertop[i] = new Pizza(client);
 
@@ -247,7 +251,7 @@ void Cook::threadCook() {
                             mvprintw(21, 50 + 3 * i, "   ");
                         mvprintw(20, 50, "Blat\0");
                         for (int i = 0; i < counterSize; i++) {
-                            if (countertop[i] != NULL)
+                            if (countertop[i] != nullptr)
                                 mvprintw(21, 50 + 3 * i, "%d", countertop[i]->getClient());
                         }
 

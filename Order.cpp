@@ -1,26 +1,23 @@
-
 #include "Order.h"
 
-Order::Order() {
-}
+Order::Order() = default;
 
-Order::Order(int c, int s, vector <int> ing) {
+Order::Order(int c, int s, std::vector<int> ing) {
 
-    for (int i = 0; i<ing.size(); i++) {
-        ingredients.push_back(ing[i]);
+    for (int i : ing) {
+        ingredients.push_back(i);
     }
 
     client = c;
     size = s;
 }
 
-Order::Order(const Order& orig) {
+Order::Order(const Order &orig) {
 }
 
-Order::~Order() {
-}
+Order::~Order() = default;
 
-vector <int> Order::getIngredients() {
+std::vector<int> Order::getIngredients() {
     return ingredients;
 }
 
