@@ -92,11 +92,13 @@ void Client::threadClient() {
         ordersList->push_back(order);
 
         ingredients.clear();
-        for (int i = 0; i < 20; i++)
+        for (int i = 0; i < 20; i++) {
             mvprintw(1, 50 + 3 * i, "   ");
+        }
         mvprintw(0, 50, "Zamowienia\0");
-        for (int i = 0; i < ordersList->size(); i++)
+        for (int i = 0; i < ordersList->size(); i++) {
             mvprintw(1, 50 + 3 * i, "%d", ordersList->operator[](i)->getClient());
+        }
 
         mutexOrdersList->unlock();
         usleep(breaks);

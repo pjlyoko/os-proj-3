@@ -23,7 +23,7 @@ public:
 
     virtual ~Supplier();
 
-    void threadSuplier();
+    void threadSupplier();
 
     void threadClose();
 

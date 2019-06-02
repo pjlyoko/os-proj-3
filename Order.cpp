@@ -2,7 +2,7 @@
 
 Order::Order() = default;
 
-Order::Order(int c, int s, std::vector<int> ing) {
+Order::Order(int c, int s, const std::vector<int>& ing) {
 
     for (int i : ing) {
         ingredients.push_back(i);

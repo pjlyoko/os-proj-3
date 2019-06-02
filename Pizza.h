@@ -5,7 +5,7 @@ class Pizza {
 public:
     Pizza();
 
-    Pizza(int c);
+    explicit Pizza(int c);
 
     Pizza(const Pizza &orig);
 
