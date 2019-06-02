@@ -27,7 +27,7 @@ Client::~Client() {
 
 void Client::print_queue(queue<Order *> q) {
     int i = 0;
-    queue<Order *> *que = new queue<Order *>(q);
+    auto *que = new queue<Order *>(q);
     while (!que->empty()) {
         mvprintw(1, 50 + 3 * i, "%d", que->front()->getClient());
         i++;

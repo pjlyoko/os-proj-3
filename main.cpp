@@ -22,7 +22,7 @@ int main() {
     vector<Supplier *> suppliers;
 
     auto ordersList = new vector<Order *>();
-    mutex mutexOrdersList, mutexFridge, mutexTools, mutexFurnances, mutexCountertop, mutexChairs;
+    mutex mutexOrdersList, mutexFridge, mutexTools, mutexFurnaces, mutexCountertop, mutexChairs;
     int fridge[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     bool tools[4]{
             true, true, true, true
@@ -46,7 +46,7 @@ int main() {
 
     for (int i = 0; i < 7; i++) {
         cooks.push_back(
-                new Cook(i, &mutexOrdersList, ordersList, &mutexFridge, fridge, &mutexTools, tools, &mutexFurnances,
+                new Cook(i, &mutexOrdersList, ordersList, &mutexFridge, fridge, &mutexTools, tools, &mutexFurnaces,
                          furnace, &mutexCountertop, countertop));
     }
 

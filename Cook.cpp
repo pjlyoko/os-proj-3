@@ -7,7 +7,7 @@ Cook::Cook() {
 }
 
 Cook::Cook(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList, mutex *mutexFridge, int *fridge,
-           mutex *mutexTools, bool *tools, mutex *mutexFurnances, int *furnace, mutex *mutexCountertop,
+           mutex *mutexTools, bool *tools, mutex *mutexFurnaces, int *furnace, mutex *mutexCountertop,
            Pizza **countertop) {
     this->numb = numb;
     this->mutexOrdersList = mutexOrdersList;
@@ -16,8 +16,8 @@ Cook::Cook(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList, mutex 
     this->fridge = fridge;
     this->mutexTools = mutexTools;
     this->tools = tools;
-    this->mutexFurnances = mutexFurnances;
-    this->furnances = furnace;
+    this->mutexFurnaces = mutexFurnaces;
+    this->furnaces = furnace;
     this->mutexCountertop = mutexCountertop;
     this->countertop = countertop;
 
@@ -36,7 +36,7 @@ Cook::~Cook() {
 
 void Cook::threadCook() {
 
-    bool allIngredients, haveTools, haveFurnance, havePlace;
+    bool allIngredients, haveTools, haveFurnace, havePlace;
     float preparingTime = 3;
     float bakeTime = 5;
     int size; //1 - mala pizza, 2 - duza
@@ -50,7 +50,7 @@ void Cook::threadCook() {
 
         allIngredients = false;
         haveTools = false;
-        haveFurnance = false;
+        haveFurnace = false;
         havePlace = false;
 
         //odbieranie zamównienia
@@ -178,26 +178,26 @@ void Cook::threadCook() {
             }
 
             //Pieczenie pizzy
-            while (!haveFurnance && !end) {
-                while (!mutexFurnances->try_lock() && !end) {
+            while (!haveFurnace && !end) {
+                while (!mutexFurnaces->try_lock() && !end) {
                     mvprintw(numb, 0, "Kucharz %d: Wklada pizze do pieca          \0", numb);
                 }
                 for (int i = 0; i < furnancesSize; i++) {
-                    if (furnances[i] >= size) {
-                        haveFurnance = true;
-                        furnances[i] -= size;
+                    if (furnaces[i] >= size) {
+                        haveFurnace = true;
+                        furnaces[i] -= size;
                         mvprintw(15, 50, "Piece\0");
                         for (int i = 0; i < furnancesSize; i++) {
-                            mvprintw(16, 50 + 3 * i, "%d", furnances[i]);
+                            mvprintw(16, 50 + 3 * i, "%d", furnaces[i]);
                         }
-                        mutexFurnances->unlock();
+                        mutexFurnaces->unlock();
                         break;
                     }
                 }
-                if (haveFurnance)
+                if (haveFurnace)
                     break;
                 else
-                    mutexFurnances->unlock();
+                    mutexFurnaces->unlock();
 
                 usleep(breaks);
             }
@@ -213,27 +213,27 @@ void Cook::threadCook() {
                 dur = chrono::steady_clock::now();
             }
 
-            while (haveFurnance && !end) {
+            while (haveFurnace && !end) {
                 mvprintw(numb, 0, "Kucharz %d: Wyjmuje pizze z pieca          \0", numb);
                 usleep(breaks);
-                while (!mutexFurnances->try_lock() && !end);
+                while (!mutexFurnaces->try_lock() && !end);
 
                 for (int i = 0; i < furnancesSize; i++) {
-                    if (furnances[i] <= 2 - size) {
-                        haveFurnance = false;
-                        furnances[i] += size;
+                    if (furnaces[i] <= 2 - size) {
+                        haveFurnace = false;
+                        furnaces[i] += size;
                         mvprintw(15, 50, "Piece\0");
                         for (int i = 0; i < furnancesSize; i++) {
-                            mvprintw(16, 50 + 3 * i, "%d", furnances[i]);
+                            mvprintw(16, 50 + 3 * i, "%d", furnaces[i]);
                         }
-                        mutexFurnances->unlock();
+                        mutexFurnaces->unlock();
                         break;
                     }
                 }
-                if (!haveFurnance)
+                if (!haveFurnace)
                     break;
                 else
-                    mutexFurnances->unlock();
+                    mutexFurnaces->unlock();
             }
 
             //Odłozenie na blat
