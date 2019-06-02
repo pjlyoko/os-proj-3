@@ -7,7 +7,7 @@ class Order {
 public:
     Order();
 
-    Order(int c, int s, std::vector<int> ing);
+    Order(int c, int s, const std::vector<int>& ing);
 
     Order(const Order &orig);
 

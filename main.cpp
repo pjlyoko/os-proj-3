@@ -7,6 +7,7 @@
 #include <iostream>
 #include <thread>
 #include <ncurses.h>
+#include <cstdlib>
 
 using namespace std;
 
@@ -20,13 +21,13 @@ int main() {
     vector<Waiter *> waiters;
     vector<Supplier *> suppliers;
 
-    vector<Order *> *ordersList = new vector<Order *>();
+    auto ordersList = new vector<Order *>();
     mutex mutexOrdersList, mutexFridge, mutexTools, mutexFurnances, mutexCountertop, mutexChairs;
     int fridge[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
     bool tools[4]{
             true, true, true, true
     };
-    int furnances[5]{
+    int furnace[5]{
             2, 2, 2, 2, 2
     };
     Pizza *countertop[10]{
@@ -46,7 +47,7 @@ int main() {
     for (int i = 0; i < 7; i++) {
         cooks.push_back(
                 new Cook(i, &mutexOrdersList, ordersList, &mutexFridge, fridge, &mutexTools, tools, &mutexFurnances,
-                         furnances, &mutexCountertop, countertop));
+                         furnace, &mutexCountertop, countertop));
     }
 
     for (int i = 0; i < 1; i++) {

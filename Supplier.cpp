@@ -15,7 +15,7 @@ Supplier::Supplier(int numb, mutex *mutexFridge, int *fridge) {
 
     end = false;
     breaks = 500000;
-    threadS = new thread(&Supplier::threadSuplier, this);
+    threadS = new thread(&Supplier::threadSupplier, this);
 }
 
 Supplier::~Supplier() {
@@ -23,7 +23,7 @@ Supplier::~Supplier() {
     delete threadS;
 }
 
-void Supplier::threadSuplier() {
+void Supplier::threadSupplier() {
     float deliverTime = 15;
     chrono::_V2::steady_clock::time_point begin, dur;
 
