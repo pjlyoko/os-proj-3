@@ -1,0 +1,2 @@
+#!/bin/bash
+g++ *.{h,cpp} -std=c++17 -pthread -lncurses -g -o filozofowie3
