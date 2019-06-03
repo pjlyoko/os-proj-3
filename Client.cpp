@@ -137,17 +137,34 @@ void Client::eat() {
 	pizza = nullptr;
 }
 
-void Client::threadClient() {
-	bool haveChair;
-	vector<int> ingredients;
-	chrono::_V2::steady_clock::time_point begin, dur;
-	Order *order;
+void Client::leave(int chairsSize) {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(10 + numb, 0, "Klient %d: Wstaje          ", numb);
+	}
 
+	usleep(breaks);
+
+	{
+		unique_lock<mutex> lk(*mutexChairs);
+
+		chairs[chairTaken] = true;
+		chairTaken = -1;
+
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+			mvprintw(25, 50, "Krzesla");
+			for(int j = 0; j < chairsSize; j++) {
+				mvprintw(26, 50 + 2 * j, "%d", (int) chairs[j]);
+			}
+		}
+	}
+}
+
+void Client::threadClient() {
 	int chairsSize = 10;
 
 	while(!end) {
-		haveChair = false;
-
 		usleep(breaks);
 
 		//Siadanie
@@ -162,34 +179,8 @@ void Client::threadClient() {
 		//Jedzenie
 		eat();
 
-		mutexWriter->lock();
-		mvprintw(10 + numb, 0, "Klient %d: Wstaje          ", numb);
-		mutexWriter->unlock();
-
-		while(haveChair && !end) {
-			usleep(breaks);
-			while(!mutexChairs->try_lock() && !end);
-
-			for(int i = 0; i < chairsSize; i++) {
-				if(!chairs[i]) {
-					haveChair = false;
-					chairs[i] = true;
-
-					mutexWriter->lock();
-					mvprintw(25, 50, "Krzesla");
-					for(int j = 0; j < chairsSize; j++) {
-						mvprintw(26, 50 + 2 * j, "%d", (int) chairs[j]);
-					}
-					mutexWriter->unlock();
-
-					mutexChairs->unlock();
-					break;
-				}
-			}
-			if(!haveChair)
-				break;
-			mutexChairs->unlock();
-		}
+		// Wychodzenie
+		leave(chairsSize);
 	}
 }
 
