@@ -21,7 +21,7 @@ class Pizzaiolo {
 public:
 	Pizzaiolo(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList, mutex *mutexFridge, int *fridge,
 			  mutex *mutexTools, bool *tools, mutex *mutexFurnaces, int *furnace, mutex *mutexCountertop,
-			  Pizza **countertop, mutex *mutexWriter);
+			  Pizza **countertop, mutex *mutexWriter, condition_variable *cv);
 
 	void threadStart();
 
@@ -42,6 +42,7 @@ private:
 	int *furnaces;
 	Pizza **countertop;
 	vector<Order *> *ordersList;
+	condition_variable *cv;
 
 	int toolTaken = -1;
 	int furnaceUsed = -1;

@@ -8,6 +8,7 @@
 #include <cmath>
 #include <chrono>
 #include <vector>
+#include <condition_variable>
 
 using namespace std;
 
@@ -16,7 +17,7 @@ using namespace std;
 
 class Waiter {
 public:
-	Waiter(int numb, mutex *mutexCountertop, Pizza **countertop, vector<Client *> clients, mutex *mutexWriter);
+	Waiter(int numb, mutex *mutexCountertop, Pizza **countertop, vector<Client *> clients, mutex *mutexWriter, condition_variable *cv);
 
 	~Waiter();
 
@@ -34,6 +35,9 @@ private:
 	mutex *mutexCountertop, *mutexWriter;
 	Pizza **countertop;
 	vector<Client *> clients;
+	condition_variable *cv;
+
+	bool pizzasAvailable(int counterSize);
 
 	void takePizza(int counterSize);
 	void deliverPizza();
