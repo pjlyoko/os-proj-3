@@ -26,6 +26,47 @@ void Client::print_queue(queue<Order *> q) {
 
 }
 
+void Client::takeASeat(int chairsSize) {
+	bool hasChair = false;
+
+	while(!hasChair && !end) {
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+			mvprintw(10 + numb, 0, "Klient %d: Szuka miejsca do siedzenia", numb);
+		}
+
+		usleep(breaks);
+
+
+		{
+			unique_lock<mutex> lk(*mutexChairs);
+
+			for(int i = 0; i < chairsSize; i++) {
+				if(chairs[i]) {
+					hasChair = true;
+					chairs[i] = false;
+					chairTaken = i;
+
+					{
+						unique_lock<mutex> lk_write(*mutexWriter);
+
+						mvprintw(25, 50, "Krzesla");
+						for(int j = 0; j < chairsSize; j++) {
+							mvprintw(26, 50 + 2 * j, "%d", (int) chairs[j]);
+						}
+					}
+
+					break;
+				}
+			}
+		}
+
+		if(hasChair) {
+			break;
+		}
+	}
+}
+
 void Client::threadClient() {
 	bool haveChair;
 	vector<int> ingredients;
@@ -42,34 +83,7 @@ void Client::threadClient() {
 		usleep(breaks);
 
 		//Siadanie
-		while(!haveChair && !end) {
-			mutexWriter->lock();
-			mvprintw(10 + numb, 0, "Klient %d: Szuka miejsca do siedzenia", numb);
-			mutexWriter->unlock();
-
-			usleep(breaks);
-			while(!mutexChairs->try_lock() && !end);
-
-			for(int i = 0; i < chairsSize; i++) {
-				if(chairs[i]) {
-					haveChair = true;
-					chairs[i] = false;
-
-					mutexWriter->lock();
-					mvprintw(25, 50, "Krzesla");
-					for(int j = 0; j < chairsSize; j++) {
-						mvprintw(26, 50 + 2 * j, "%d", (int) chairs[j]);
-					}
-					mutexWriter->unlock();
-
-					mutexChairs->unlock();
-					break;
-				}
-			}
-			if(haveChair)
-				break;
-			mutexChairs->unlock();
-		}
+		takeASeat(chairsSize);
 
 		//Składanie zamówienia
 

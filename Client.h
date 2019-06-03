@@ -41,6 +41,10 @@ private:
 	mutex *mutexChairs, *mutexOrdersList, *mutexWriter;
 	bool *chairs;
 	vector<Order *> *ordersList;
+
+	int chairTaken = -1;
+
+	void takeASeat(int chairsSize);
 };
 
 #endif /* CLIENT_H */
