@@ -116,18 +116,37 @@ void Client::waitForDelivery() {
 	}
 }
 
+void Client::eat() {
+	float eatTime = 1 + random() % 3;
+
+	auto begin = chrono::steady_clock::now();
+	auto dur = chrono::steady_clock::now();
+
+	while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < eatTime && !end) {
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+			mvprintw(numb + 10, 0, "Klient %d: Je %d %%                ", numb, (int) round(
+					chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / eatTime * 100));
+		}
+
+		usleep(breaks);
+		dur = chrono::steady_clock::now();
+	}
+
+	delete pizza;
+	pizza = nullptr;
+}
+
 void Client::threadClient() {
 	bool haveChair;
 	vector<int> ingredients;
 	chrono::_V2::steady_clock::time_point begin, dur;
-	float eatTime;
 	Order *order;
 
 	int chairsSize = 10;
 
 	while(!end) {
 		haveChair = false;
-		eatTime = 1 + random() % 3;
 
 		usleep(breaks);
 
@@ -141,20 +160,7 @@ void Client::threadClient() {
 		waitForDelivery();
 
 		//Jedzenie
-		begin = chrono::steady_clock::now();
-		dur = chrono::steady_clock::now();
-
-		while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < eatTime && !end) {
-			mutexWriter->lock();
-			mvprintw(numb + 10, 0, "Klient %d: Je %d %%                ", numb, (int) round(
-					chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / eatTime * 100));
-			mutexWriter->unlock();
-
-			usleep(breaks);
-			dur = chrono::steady_clock::now();
-		}
-		delete pizza;
-		pizza = nullptr;
+		eat();
 
 		mutexWriter->lock();
 		mvprintw(10 + numb, 0, "Klient %d: Wstaje          ", numb);

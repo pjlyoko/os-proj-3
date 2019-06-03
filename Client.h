@@ -47,6 +47,7 @@ private:
 	void takeASeat(int chairsSize);
 	void makeOrder();
 	void waitForDelivery();
+	void eat();
 };
 
 #endif /* CLIENT_H */
