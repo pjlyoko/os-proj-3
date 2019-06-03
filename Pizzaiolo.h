@@ -46,7 +46,6 @@ private:
 	int toolTaken = -1;
 	int furnaceUsed = -1;
 
-	void takeOrder();
 	void takeIngredients(int fridgeSize);
 	void takeTool(int toolsSize);
 	void preparePizza(float preparingTime);
