@@ -80,48 +80,22 @@ void Pizzaiolo::threadStart() {
 			mutexOrdersList->unlock();
 
 			//zbieranie składników
-			while(!allIngredients && !end) {
-				int i;
+			mutexWriter->lock();
+			mvprintw(numb, 0, "Kucharz %d: Wyjmuje skladniki z lodowki          ", numb);
+			mutexWriter->unlock();
+			{
+				unique_lock<mutex> lk(*mutexFridge);
 
-				mutexWriter->lock();
-				mvprintw(numb, 0, "Kucharz %d: Wyjmuje skladniki z lodowki          ", numb);
-				mutexWriter->unlock();
-
-				while(!mutexFridge->try_lock() && !end);
+				for(int ingredient : ingredients) {
+					fridge[ingredient]++;
+				}
 
 				mutexWriter->lock();
 				mvprintw(5, 50, "Lodowka");
 				for(int i = 0; i < fridgeSize; i++) {
-					mvprintw(6, 50 + 3 * i, "%d", fridge[i]);
+					mvprintw(6, 50 + 5 * i, "%d", fridge[i]);
 				}
 				mutexWriter->unlock();
-
-				for(i = 0; i < ingredients.size(); i++) {
-					if(fridge[ingredients[i]] <= 0) {
-						mutexWriter->lock();
-						mvprintw(numb, 0, "Kucharz %d: Brak skladnikow na pizze          ", numb);
-						mutexWriter->unlock();
-
-						mutexFridge->unlock();
-						break;
-					}
-				}
-				if(i >= ingredients.size()) {
-					allIngredients = true;
-					for(i = 0; i < ingredients.size(); i++) {
-						fridge[ingredients[i]]--;
-					}
-
-					mutexWriter->lock();
-					mvprintw(5, 50, "Lodowka");
-					for(int i = 0; i < fridgeSize; i++) {
-						mvprintw(6, 50 + 3 * i, "%d ", fridge[i]);
-					}
-					mutexWriter->unlock();
-
-					mutexFridge->unlock();
-					break;
-				}
 
 				usleep(breaks);
 			}

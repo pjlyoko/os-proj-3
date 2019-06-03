@@ -18,7 +18,6 @@ int main() {
 	vector<Pizzaiolo *> pizzaiolos;
 	vector<Client *> clients;
 	vector<Waiter *> waiters;
-	vector<Supplier *> suppliers;
 
 	auto ordersList = new vector<Order *>();
 	mutex mutexOrdersList, mutexFridge, mutexTools, mutexFurnaces, mutexCountertop, mutexChairs, mutexWriter;
@@ -49,11 +48,6 @@ int main() {
 		pizzaiolos.push_back(
 				new Pizzaiolo(i, &mutexOrdersList, ordersList, &mutexFridge, fridge, &mutexTools, tools, &mutexFurnaces,
 							  furnace, &mutexCountertop, countertop, &mutexWriter));
-	}
-
-	suppliers.reserve(1);
-	for(int i = 0; i < 1; i++) {
-		suppliers.push_back(new Supplier(i, &mutexFridge, fridge, &mutexWriter));
 	}
 
 	waiters.reserve(2);
@@ -87,10 +81,6 @@ int main() {
 		waiters[i]->threadClose();
 		waiters.pop_back();
 
-	}
-	for(int i = suppliers.size() - 1; i > 0; i--) {
-		suppliers[i]->threadClose();
-		suppliers.pop_back();
 	}
 
 	endwin();
