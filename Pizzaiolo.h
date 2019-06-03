@@ -10,6 +10,7 @@
 #include <cmath>
 #include <chrono>
 #include <algorithm>
+#include <condition_variable>
 
 using namespace std;
 
@@ -21,8 +22,6 @@ public:
 	Pizzaiolo(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList, mutex *mutexFridge, int *fridge,
 			  mutex *mutexTools, bool *tools, mutex *mutexFurnaces, int *furnace, mutex *mutexCountertop,
 			  Pizza **countertop, mutex *mutexWriter);
-
-	Pizzaiolo(const Pizzaiolo &orig);
 
 	void threadStart();
 
@@ -43,6 +42,18 @@ private:
 	int *furnaces;
 	Pizza **countertop;
 	vector<Order *> *ordersList;
+
+	int toolTaken = -1;
+	int furnaceUsed = -1;
+
+	void takeOrder();
+	void takeIngredients(int fridgeSize);
+	void takeTool(int toolsSize);
+	void preparePizza(int preparingTime);
+	void returnTool(int toolsSize);
+	void bakePizza(int pizzaSize, int bakeTime, int furnacesSize);
+	void takePizzaFromFurnace(int pizzaSize, int furnacesSize);
+	void putPizzaOnCountertop(int client, int countertopSize);
 };
 
 #endif /* COOK_H */

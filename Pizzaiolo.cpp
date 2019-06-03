@@ -2,24 +2,13 @@
 
 Pizzaiolo::Pizzaiolo(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList, mutex *mutexFridge, int *fridge,
 					 mutex *mutexTools, bool *tools, mutex *mutexFurnaces, int *furnace, mutex *mutexCountertop,
-					 Pizza **countertop, mutex *mutexWriter) {
-	this->numb = numb;
-	this->mutexOrdersList = mutexOrdersList;
-	this->ordersList = ordersList;
-	this->mutexFridge = mutexFridge;
-	this->fridge = fridge;
-	this->mutexTools = mutexTools;
-	this->tools = tools;
-	this->mutexFurnaces = mutexFurnaces;
-	this->furnaces = furnace;
-	this->mutexCountertop = mutexCountertop;
-	this->countertop = countertop;
-	this->mutexWriter = mutexWriter;
-
+					 Pizza **countertop, mutex *mutexWriter) : numb(numb), mutexOrdersList(mutexOrdersList),
+															   ordersList(ordersList), mutexFridge(mutexFridge),
+															   fridge(fridge), mutexTools(mutexTools),
+															   tools(tools), mutexFurnaces(mutexFurnaces),
+															   furnaces(furnace), mutexCountertop(mutexCountertop),
+															   countertop(countertop), mutexWriter(mutexWriter) {
 	threadC = new thread(&Pizzaiolo::threadStart, this);
-}
-
-Pizzaiolo::Pizzaiolo(const Pizzaiolo &orig) {
 }
 
 Pizzaiolo::~Pizzaiolo() {
@@ -27,32 +16,265 @@ Pizzaiolo::~Pizzaiolo() {
 	delete threadC;
 }
 
-void Pizzaiolo::threadStart() {
+void Pizzaiolo::takeIngredients(int fridgeSize) {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(numb, 0, "Kucharz %d: Wyjmuje skladniki z lodowki          ", numb);
+	}
 
-	bool allIngredients, haveTools, haveFurnace, havePlace;
+	{
+		unique_lock<mutex> lk(*mutexFridge);
+
+		for(int ingredient : ingredients) {
+			fridge[ingredient]++;
+		}
+	}
+
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(5, 50, "Lodowka");
+		for(int i = 0; i < fridgeSize; i++) {
+			mvprintw(6, 50 + 5 * i, "%d", fridge[i]);
+		}
+	}
+
+	usleep(breaks);
+
+	ingredients.clear();
+}
+
+void Pizzaiolo::takeTool(int toolsSize) {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(numb, 0, "Kucharz %d: podnosi narzedzia               ", numb);
+	}
+
+	bool hasTool = false;
+
+	while(!end) {
+		{
+			unique_lock<mutex> lk(*mutexTools);
+
+			for(int i = 0; i < toolsSize; i++) {
+				if(tools[i]) {
+					tools[i] = false;
+					hasTool = true;
+
+					toolTaken = i;
+
+					{
+						unique_lock<mutex> lk_write(*mutexWriter);
+						mvprintw(10, 50, "Narzedzia");
+						for(int j = 0; j < toolsSize; j++) {
+							mvprintw(11, 50 + 3 * j, "%d", (int) tools[j]);
+						}
+					}
+
+					break;
+				}
+			}
+		}
+
+		if(hasTool) {
+			break;
+		}
+
+		usleep(breaks);
+	}
+}
+
+void Pizzaiolo::preparePizza(int preparingTime) {
+	auto begin = chrono::steady_clock::now();
+	auto dur = chrono::steady_clock::now();
+
+	while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < preparingTime && !end) {
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+			mvprintw(numb, 0, "Kucharz %d: Przygotowuje pizze %d %%            ", numb, (int) round(
+					chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / preparingTime * 100));
+		}
+
+		usleep(breaks);
+		dur = chrono::steady_clock::now();
+	}
+}
+
+void Pizzaiolo::returnTool(int toolsSize) {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(numb, 0, "Kucharz %d: Odklada narzedzia               ", numb);
+	}
+
+	usleep(breaks);
+
+	mutexTools->lock();
+	//while(!mutexTools->try_lock() && !end);
+
+	tools[toolTaken] = true;
+	toolTaken = -1;
+
+	mutexTools->unlock();
+
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(10, 50, "Narzedzia");
+		for(int j = 0; j < toolsSize; j++) {
+			mvprintw(11, 50 + 3 * j, "%d", (int) tools[j]);
+		}
+	}
+}
+
+void Pizzaiolo::bakePizza(int pizzaSize, int bakeTime, int furnacesSize) {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(numb, 0, "Kucharz %d: Wklada pizze do pieca          ", numb);
+	}
+
+	int haveFurnace = false;
+
+	while(!haveFurnace) {
+		mutexFurnaces->lock();
+
+		for(int i = 0; i < furnacesSize; i++) {
+			if(furnaces[i] >= pizzaSize) {
+				haveFurnace = true;
+				furnaces[i] -= pizzaSize;
+				furnaceUsed = i;
+
+				{
+					unique_lock<mutex> lk_write(*mutexWriter);
+					mvprintw(15, 50, "Piece");
+					for(int j = 0; j < furnacesSize; j++) {
+						mvprintw(16, 50 + 3 * j, "%d", furnaces[j]);
+					}
+				}
+
+				mutexFurnaces->unlock();
+				break;
+			}
+		}
+
+		mutexFurnaces->unlock();
+
+		if(haveFurnace) {
+			break;
+		} else {
+			usleep(breaks);
+		}
+	}
+
+	auto begin = chrono::steady_clock::now();
+	auto dur = chrono::steady_clock::now();
+
+	while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < bakeTime && !end) {
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+			mvprintw(numb, 0, "Kucharz %d: Piecze pizze %d%%            ", numb, (int) round(
+					chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / bakeTime * 100));
+		}
+
+		usleep(breaks);
+		dur = chrono::steady_clock::now();
+	}
+}
+
+void Pizzaiolo::takePizzaFromFurnace(int pizzaSize, int furnacesSize) {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(numb, 0, "Kucharz %d: Wyjmuje pizze z pieca          ", numb);
+	}
+
+	usleep(breaks);
+
+	unique_lock<mutex> lk(*mutexFurnaces);
+
+	furnaces[furnaceUsed] += pizzaSize;
+	furnaceUsed = -1;
+
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(15, 50, "Piece");
+		for(int j = 0; j < furnacesSize; j++) {
+			mvprintw(16, 50 + 3 * j, "%d", furnaces[j]);
+		}
+	}
+}
+
+void Pizzaiolo::putPizzaOnCountertop(int client, int countertopSize) {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(numb, 0, "Kucharz %d: Odklada pizze na blat          ", numb);
+	}
+
+	bool hasPlace = false;
+
+	usleep(breaks);
+
+	while(!hasPlace) {
+		{
+			unique_lock<mutex> lk(*mutexCountertop);
+			for(int i = 0; i < countertopSize; i++) {
+				if(countertop[i] == nullptr) {
+					hasPlace = true;
+					countertop[i] = new Pizza(client);
+
+					{
+						unique_lock<mutex> lk_write(*mutexWriter);
+
+						for(int j = 0; j < 20; j++) {
+							mvprintw(21, 50 + 3 * j, "   ");
+						}
+						mvprintw(20, 50, "Blat");
+						for(int j = 0; j < countertopSize; j++) {
+							if(countertop[j] != nullptr) {
+								mvprintw(21, 50 + 3 * j, "%d", countertop[j]->getClient());
+							}
+						}
+					}
+
+					break;
+				}
+			}
+		}
+
+		if(hasPlace) {
+			break;
+		} else {
+			usleep(breaks);
+		}
+	}
+}
+
+void Pizzaiolo::threadStart() {
+	bool haveTools, haveFurnace, havePlace;
 	float preparingTime = 3;
 	float bakeTime = 5;
-	int size; //1 - mala pizza, 2 - duza
+	int pizzaSize; //1 - mala, 2 - duza
 	int client;
 	chrono::_V2::steady_clock::time_point begin, dur;
 	Order *order;
 
-	int fridgeSize = 10, counterSize = 10, toolsSize = 4, furnancesSize = 5;
+	int fridgeSize = 10, counterSize = 10, toolsSize = 4, furnacesSize = 5;
 
 	while(!end) {
-
-		allIngredients = false;
-		haveTools = false;
-		haveFurnace = false;
-		havePlace = false;
-
 		//odbieranie zamównienia
-		mutexWriter->lock();
-		mvprintw(numb, 0, "Kucharz %d: Czyta liste zamowien          ", numb);
-		mutexWriter->unlock();
-		while(!mutexOrdersList->try_lock() && !end);
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+			mvprintw(numb, 0, "Kucharz %d: Czyta liste zamowien          ", numb);
+		}
 
-		if(!ordersList->empty()) {
+		mutexOrdersList->lock();
+
+		if(ordersList->empty()) {
+			mutexOrdersList->unlock();
+
+			{
+				unique_lock<mutex> lk_write(*mutexWriter);
+				mvprintw(numb, 0, "Kucharz %d: Czeka na zamowienia          ", numb);
+			}
+
+			usleep(breaks);
+		} else {
 			order = ordersList->front();
 			// usuwa zamówienie z listy zamówień
 			ordersList->erase(remove(ordersList->begin(), ordersList->end(), order));
@@ -62,243 +284,44 @@ void Pizzaiolo::threadStart() {
 			}
 
 			client = order->getClient();
-			size = order->getSize();
+			pizzaSize = order->getSize();
 
 			delete order;
 			order = nullptr;
 
-			mutexWriter->lock();
-			mvprintw(0, 50, "Zamowienia");
-			for(int i = 0; i < 20; i++) {
-				mvprintw(1, 50 + 3 * i, "   ");
+			{
+				unique_lock<mutex> lk_write(*mutexWriter);
+
+				mvprintw(0, 50, "Zamowienia");
+				for(int i = 0; i < 20; i++) {
+					mvprintw(1, 50 + 3 * i, "   ");
+				}
+				for(int i = 0; i < ordersList->size(); i++) {
+					mvprintw(1, 50 + 3 * i, "%d", ordersList->operator[](i)->getClient());
+				}
 			}
-			for(int i = 0; i < ordersList->size(); i++) {
-				mvprintw(1, 50 + 3 * i, "%d", ordersList->operator[](i)->getClient());
-			}
-			mutexWriter->unlock();
 
 			mutexOrdersList->unlock();
 
 			//zbieranie składników
-			mutexWriter->lock();
-			mvprintw(numb, 0, "Kucharz %d: Wyjmuje skladniki z lodowki          ", numb);
-			mutexWriter->unlock();
-			{
-				unique_lock<mutex> lk(*mutexFridge);
-
-				for(int ingredient : ingredients) {
-					fridge[ingredient]++;
-				}
-
-				mutexWriter->lock();
-				mvprintw(5, 50, "Lodowka");
-				for(int i = 0; i < fridgeSize; i++) {
-					mvprintw(6, 50 + 5 * i, "%d", fridge[i]);
-				}
-				mutexWriter->unlock();
-
-				usleep(breaks);
-			}
-			ingredients.clear();
+			takeIngredients(fridgeSize);
 
 			//podnoszenie narzedzi
-			mutexWriter->lock();
-			mvprintw(numb, 0, "Kucharz %d: podnosi narzedzia               ", numb);
-			mutexWriter->unlock();
-
-			while(!haveTools && !end) {
-				while(!mutexTools->try_lock() && !end);
-
-				for(int i = 0; i < toolsSize; i++) {
-					if(tools[i]) {
-						haveTools = true;
-						tools[i] = false;
-
-						mutexWriter->lock();
-						mvprintw(10, 50, "Narzedzia");
-						for(int i = 0; i < toolsSize; i++) {
-							mvprintw(11, 50 + 3 * i, "%d", (int) tools[i]);
-						}
-						mutexWriter->unlock();
-
-						mutexTools->unlock();
-						break;
-					}
-				}
-				if(haveTools)
-					break;
-				else
-					mutexTools->unlock();
-
-				usleep(breaks);
-			}
+			takeTool(toolsSize);
 
 			//Przygotowywanie pizzy
-			begin = chrono::steady_clock::now();
-			dur = chrono::steady_clock::now();
-
-			while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < preparingTime && !end) {
-				mutexWriter->lock();
-				mvprintw(numb, 0, "Kucharz %d: Przygotowuje pizze %d %%            ", numb, (int) round(
-						chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / preparingTime * 100));
-				mutexWriter->unlock();
-
-				usleep(breaks);
-				dur = chrono::steady_clock::now();
-			}
+			preparePizza(preparingTime);
 
 			//Odlożenie narzędzi
-			while(haveTools && !end) {
-				mutexWriter->lock();
-				mvprintw(numb, 0, "Kucharz %d: Odklada narzedzia               ", numb);
-				mutexWriter->unlock();
-
-				usleep(breaks);
-				while(!mutexTools->try_lock() && !end);
-
-				for(int i = 0; i < toolsSize; i++) {
-					if(!tools[i]) {
-						haveTools = false;
-						tools[i] = true;
-
-						mutexWriter->lock();
-						mvprintw(10, 50, "Narzedzia");
-						for(int i = 0; i < toolsSize; i++) {
-							mvprintw(11, 50 + 3 * i, "%d", (int) tools[i]);
-						}
-						mutexWriter->unlock();
-
-						mutexTools->unlock();
-						break;
-					}
-				}
-				if(!haveTools)
-					break;
-				else
-					mutexTools->unlock();
-
-				usleep(breaks);
-			}
+			returnTool(toolsSize);
 
 			//Pieczenie pizzy
-			while(!haveFurnace && !end) {
-				mutexWriter->lock();
-				mvprintw(numb, 0, "Kucharz %d: Wklada pizze do pieca          ", numb);
-				mutexWriter->unlock();
+			bakePizza(pizzaSize, bakeTime, furnacesSize);
 
-				while(!mutexFurnaces->try_lock() && !end);
-
-				for(int i = 0; i < furnancesSize; i++) {
-					if(furnaces[i] >= size) {
-						haveFurnace = true;
-						furnaces[i] -= size;
-
-						mutexWriter->lock();
-						mvprintw(15, 50, "Piece");
-						for(int i = 0; i < furnancesSize; i++) {
-							mvprintw(16, 50 + 3 * i, "%d", furnaces[i]);
-						}
-						mutexWriter->unlock();
-
-						mutexFurnaces->unlock();
-						break;
-					}
-				}
-				if(haveFurnace)
-					break;
-				else
-					mutexFurnaces->unlock();
-
-				usleep(breaks);
-			}
-
-			begin = chrono::steady_clock::now();
-			dur = chrono::steady_clock::now();
-
-			while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < bakeTime && !end) {
-				mutexWriter->lock();
-				mvprintw(numb, 0, "Kucharz %d: Piecze pizze %d %%           ", numb, (int) round(
-						chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / bakeTime * 100));
-				mutexWriter->unlock();
-
-				usleep(breaks);
-				dur = chrono::steady_clock::now();
-			}
-
-			mutexWriter->lock();
-			mvprintw(numb, 0, "Kucharz %d: Wyjmuje pizze z pieca          ", numb);
-			mutexWriter->unlock();
-
-			while(haveFurnace && !end) {
-				usleep(breaks);
-				while(!mutexFurnaces->try_lock() && !end);
-
-				for(int i = 0; i < furnancesSize; i++) {
-					if(furnaces[i] <= 2 - size) {
-						haveFurnace = false;
-						furnaces[i] += size;
-
-						mutexWriter->lock();
-						mvprintw(15, 50, "Piece");
-						for(int i = 0; i < furnancesSize; i++) {
-							mvprintw(16, 50 + 3 * i, "%d", furnaces[i]);
-						}
-						mutexWriter->unlock();
-
-						mutexFurnaces->unlock();
-						break;
-					}
-				}
-				if(!haveFurnace)
-					break;
-				else
-					mutexFurnaces->unlock();
-			}
+			takePizzaFromFurnace(pizzaSize, furnacesSize);
 
 			//Odłozenie na blat
-			mutexWriter->lock();
-			mvprintw(numb, 0, "Kucharz %d: Odklada pizze na blat          ", numb);
-			mutexWriter->unlock();
-			while(!havePlace && !end) {
-				usleep(breaks);
-				while(!mutexCountertop->try_lock() && !end);
-
-				for(int i = 0; i < counterSize; i++) {
-					if(countertop[i] == nullptr) {
-						havePlace = true;
-						countertop[i] = new Pizza(client);
-
-						mutexWriter->lock();
-						for(int i = 0; i < 20; i++) {
-							mvprintw(21, 50 + 3 * i, "   ");
-						}
-
-						mvprintw(20, 50, "Blat");
-						for(int i = 0; i < counterSize; i++) {
-							if(countertop[i] != nullptr) {
-								mvprintw(21, 50 + 3 * i, "%d", countertop[i]->getClient());
-							}
-						}
-						mutexWriter->unlock();
-
-						mutexCountertop->unlock();
-						break;
-					}
-				}
-				if(havePlace)
-					break;
-				else
-					mutexCountertop->unlock();
-			}
-
-		} else {
-			mutexOrdersList->unlock();
-
-			mutexWriter->lock();
-			mvprintw(numb, 0, "Kucharz %d: Czeka na zamowienia          ", numb);
-			mutexWriter->unlock();
-
-			usleep(breaks);
+			putPizzaOnCountertop(client, counterSize);
 		}
 	}
 }
