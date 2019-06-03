@@ -65,7 +65,7 @@ void Waiter::takePizza(int counterSize) {
 }
 
 void Waiter::deliverPizza() {
-	float deliverTime = (rand() % 10) / 5. + 1;
+	float deliverTime = (random() % 10) / 5. + 1;
 	auto begin = chrono::steady_clock::now();
 	auto dur = chrono::steady_clock::now();
 

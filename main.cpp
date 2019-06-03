@@ -11,7 +11,7 @@
 
 using namespace std;
 
-void windowResizeHandler(int signal) {
+void windowResizeHandler(int) {
 	endwin();
 	refresh();
 	clear();
@@ -20,11 +20,11 @@ void windowResizeHandler(int signal) {
 int main() {
 	signal(SIGWINCH, windowResizeHandler);
 
-	srand(time(nullptr));
+	srandom(time(nullptr));
 	auto win = initscr();
 	curs_set(0);
 
-	char x = '0';
+	char x;
 
 	int x_max = 0, y_max = 0;
 

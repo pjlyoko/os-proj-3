@@ -37,7 +37,7 @@ void Client::threadClient() {
 
 	while(!end) {
 		haveChair = false;
-		eatTime = 1 + rand() % 3;
+		eatTime = 1 + random() % 3;
 
 		usleep(breaks);
 
@@ -57,8 +57,8 @@ void Client::threadClient() {
 
 					mutexWriter->lock();
 					mvprintw(25, 50, "Krzesla");
-					for(int i = 0; i < chairsSize; i++) {
-						mvprintw(26, 50 + 2 * i, "%d", (int) chairs[i]);
+					for(int j = 0; j < chairsSize; j++) {
+						mvprintw(26, 50 + 2 * j, "%d", (int) chairs[j]);
 					}
 					mutexWriter->unlock();
 
@@ -81,12 +81,12 @@ void Client::threadClient() {
 		while(!mutexOrdersList->try_lock() && !end);
 
 		ingredients.push_back(0); //ciasto i inne składniki
-		int numberOfIngredients = rand() % 4 + 3;
+		int numberOfIngredients = random() % 4 + 3;
 		for(int i = 1; i < numberOfIngredients; i++) {
-			ingredients.push_back(rand() % 9 + 1);
+			ingredients.push_back(random() % 9 + 1);
 		}
 
-		order = new Order(numb, rand() % 2 + 1, ingredients);
+		order = new Order(numb, random() % 2 + 1, ingredients);
 		ordersList->push_back(order);
 
 		ingredients.clear();
@@ -142,8 +142,8 @@ void Client::threadClient() {
 
 					mutexWriter->lock();
 					mvprintw(25, 50, "Krzesla");
-					for(int i = 0; i < chairsSize; i++) {
-						mvprintw(26, 50 + 2 * i, "%d", (int) chairs[i]);
+					for(int j = 0; j < chairsSize; j++) {
+						mvprintw(26, 50 + 2 * j, "%d", (int) chairs[j]);
 					}
 					mutexWriter->unlock();
 
