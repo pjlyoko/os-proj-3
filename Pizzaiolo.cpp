@@ -53,7 +53,6 @@ void Pizzaiolo::threadStart() {
 		while(!mutexOrdersList->try_lock() && !end);
 
 		if(!ordersList->empty()) {
-			// TODO: Chyba trzeba to objąć blokadą, aby nie dopuścić do wzięcia dwa razy tego samego zamówienia.
 			order = ordersList->front();
 			// usuwa zamówienie z listy zamówień
 			ordersList->erase(remove(ordersList->begin(), ordersList->end(), order));
