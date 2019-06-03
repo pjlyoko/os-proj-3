@@ -1,157 +1,167 @@
+#include <utility>
+
 #include "Client.h"
 
-Client::Client() {
-    end = false;
-    breaks = 500000;
-}
-
-Client::Client(int numb, mutex *mutexChairs, bool *chairs, mutex *mutexOrdersList, vector<Order *> *ordersList) {
-    this->numb = numb;
-    this->mutexOrdersList = mutexOrdersList;
-    this->ordersList = ordersList;
-    this->mutexChairs = mutexChairs;
-    this->chairs = chairs;
-
-    end = false;
-    breaks = 500000;
-    threadC = new thread(&Client::threadClient, this);
-}
-
-Client::Client(const Client &orig) {
+Client::Client(int numb, mutex *mutexChairs, bool *chairs, mutex *mutexOrdersList, vector<Order *> *ordersList,
+			   mutex *mutexWriter) :
+		numb(numb), mutexOrdersList(mutexOrdersList), ordersList(ordersList), mutexChairs(mutexChairs), chairs(chairs),
+		mutexWriter(mutexWriter) {
+	threadC = new thread(&Client::threadClient, this);
 }
 
 Client::~Client() {
-    threadC->join();
-    delete threadC;
+	threadC->join();
+	delete threadC;
 }
 
 void Client::print_queue(queue<Order *> q) {
-    int i = 0;
-    auto *que = new queue<Order *>(q);
-    while (!que->empty()) {
-        mvprintw(1, 50 + 3 * i, "%d", que->front()->getClient());
-        i++;
-        que->pop();
-    }
-    delete que;
+	int i = 0;
+	auto *que = new queue<Order *>(std::move(q));
+	while(!que->empty()) {
+		mvprintw(1, 50 + 3 * i, "%d", que->front()->getClient());
+		i++;
+		que->pop();
+	}
+	delete que;
 
 }
 
 void Client::threadClient() {
-    bool haveChair;
-    vector<int> ingredients;
-    chrono::_V2::steady_clock::time_point begin, dur;
-    float eatTime;
-    Order *order;
+	bool haveChair;
+	vector<int> ingredients;
+	chrono::_V2::steady_clock::time_point begin, dur;
+	float eatTime;
+	Order *order;
 
-    int chairsSize = 10;
+	int chairsSize = 10;
 
-    while (!end) {
-        haveChair = false;
-        pizza = nullptr;
-        eatTime = 1 + rand() % 3;
+	while(!end) {
+		haveChair = false;
+		eatTime = 1 + rand() % 3;
 
-        usleep(breaks);
+		usleep(breaks);
 
-        //Siadanie
-        while (!haveChair && !end) {
-            mvprintw(10 + numb, 0, "Klient %d: Szuka miejsca do siedzenia\0", numb);
-            usleep(breaks);
-            while (!mutexChairs->try_lock() && !end);
+		//Siadanie
+		while(!haveChair && !end) {
+			mutexWriter->lock();
+			mvprintw(10 + numb, 0, "Klient %d: Szuka miejsca do siedzenia", numb);
+			mutexWriter->unlock();
 
-            for (int i = 0; i < chairsSize; i++) {
-                if (chairs[i]) {
-                    haveChair = true;
-                    chairs[i] = false;
-                    mvprintw(25, 50, "Krzesla\0");
-                    for (int i = 0; i < chairsSize; i++) {
-                        mvprintw(26, 50 + 2 * i, "%d", (int) chairs[i]);
-                    }
-                    mutexChairs->unlock();
-                    break;
-                }
-            }
-            if (haveChair)
-                break;
-            mutexChairs->unlock();
-        }
+			usleep(breaks);
+			while(!mutexChairs->try_lock() && !end);
 
-        //Składanie zamówienia
+			for(int i = 0; i < chairsSize; i++) {
+				if(chairs[i]) {
+					haveChair = true;
+					chairs[i] = false;
 
-        mvprintw(10 + numb, 0, "Klient %d: Sklada zamowienie           \0", numb);
-        usleep(breaks);
-        while (!mutexOrdersList->try_lock() && !end);
+					mutexWriter->lock();
+					mvprintw(25, 50, "Krzesla");
+					for(int i = 0; i < chairsSize; i++) {
+						mvprintw(26, 50 + 2 * i, "%d", (int) chairs[i]);
+					}
+					mutexWriter->unlock();
 
-        ingredients.push_back(0); //ciasto i inne składniki
-        int numberOfIngredients = rand() % 4 + 3;
-        for (int i = 1; i < numberOfIngredients; i++) {
-            ingredients.push_back(rand() % 9 + 1);
-        }
+					mutexChairs->unlock();
+					break;
+				}
+			}
+			if(haveChair)
+				break;
+			mutexChairs->unlock();
+		}
 
-        order = new Order(numb, rand() % 2 + 1, ingredients);
-        ordersList->push_back(order);
+		//Składanie zamówienia
 
-        ingredients.clear();
-        for (int i = 0; i < 20; i++) {
-            mvprintw(1, 50 + 3 * i, "   ");
-        }
-        mvprintw(0, 50, "Zamowienia\0");
-        for (int i = 0; i < ordersList->size(); i++) {
-            mvprintw(1, 50 + 3 * i, "%d", ordersList->operator[](i)->getClient());
-        }
+		mutexWriter->lock();
+		mvprintw(10 + numb, 0, "Klient %d: Sklada zamowienie           ", numb);
+		mutexWriter->unlock();
 
-        mutexOrdersList->unlock();
-        usleep(breaks);
+		usleep(breaks);
+		while(!mutexOrdersList->try_lock() && !end);
 
-        //Czekanie
-        while (pizza == nullptr && !end) {
-            mvprintw(10 + numb, 0, "Klient %d: Czeka na pizze           \0", numb);
-            usleep(breaks);
-        }
+		ingredients.push_back(0); //ciasto i inne składniki
+		int numberOfIngredients = rand() % 4 + 3;
+		for(int i = 1; i < numberOfIngredients; i++) {
+			ingredients.push_back(rand() % 9 + 1);
+		}
 
-        //Jedzenie
-        begin = chrono::steady_clock::now();
-        dur = chrono::steady_clock::now();
+		order = new Order(numb, rand() % 2 + 1, ingredients);
+		ordersList->push_back(order);
 
-        while (chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < eatTime && !end) {
-            mvprintw(numb + 10, 0, "Klient %d: Je %d %%                \0", numb, (int) round(
-                    chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / eatTime * 100));
+		ingredients.clear();
+		mutexWriter->lock();
+		for(int i = 0; i < 20; i++) {
+			mvprintw(1, 50 + 3 * i, "   ");
+		}
+		mvprintw(0, 50, "Zamowienia");
+		for(int i = 0; i < ordersList->size(); i++) {
+			mvprintw(1, 50 + 3 * i, "%d", ordersList->operator[](i)->getClient());
+		}
+		mutexWriter->unlock();
 
-            usleep(breaks);
-            dur = chrono::steady_clock::now();
-        }
-        delete pizza;
+		mutexOrdersList->unlock();
+		usleep(breaks);
 
-        while (haveChair && !end) {
-            mvprintw(10 + numb, 0, "Klient %d: Wstaje          \0", numb);
-            usleep(breaks);
-            while (!mutexChairs->try_lock() && !end);
+		//Czekanie
+		mutexWriter->lock();
+		mvprintw(10 + numb, 0, "Klient %d: Czeka na pizze           ", numb);
+		mutexWriter->unlock();
+		while(pizza == nullptr && !end) {
+			usleep(breaks);
+		}
 
-            for (int i = 0; i < chairsSize; i++) {
-                if (!chairs[i]) {
-                    haveChair = false;
-                    chairs[i] = true;
-                    mvprintw(25, 50, "Krzesla\0");
-                    for (int i = 0; i < chairsSize; i++) {
-                        mvprintw(26, 50 + 2 * i, "%d", (int) chairs[i]);
-                    }
-                    mutexChairs->unlock();
-                    break;
-                }
-            }
-            if (!haveChair)
-                break;
-            mutexChairs->unlock();
-        }
+		//Jedzenie
+		begin = chrono::steady_clock::now();
+		dur = chrono::steady_clock::now();
 
-    }
+		while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < eatTime && !end) {
+			mutexWriter->lock();
+			mvprintw(numb + 10, 0, "Klient %d: Je %d %%                ", numb, (int) round(
+					chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / eatTime * 100));
+			mutexWriter->unlock();
 
+			usleep(breaks);
+			dur = chrono::steady_clock::now();
+		}
+		delete pizza;
+		pizza = nullptr;
+
+		mutexWriter->lock();
+		mvprintw(10 + numb, 0, "Klient %d: Wstaje          ", numb);
+		mutexWriter->unlock();
+
+		while(haveChair && !end) {
+			usleep(breaks);
+			while(!mutexChairs->try_lock() && !end);
+
+			for(int i = 0; i < chairsSize; i++) {
+				if(!chairs[i]) {
+					haveChair = false;
+					chairs[i] = true;
+
+					mutexWriter->lock();
+					mvprintw(25, 50, "Krzesla");
+					for(int i = 0; i < chairsSize; i++) {
+						mvprintw(26, 50 + 2 * i, "%d", (int) chairs[i]);
+					}
+					mutexWriter->unlock();
+
+					mutexChairs->unlock();
+					break;
+				}
+			}
+			if(!haveChair)
+				break;
+			mutexChairs->unlock();
+		}
+	}
 }
 
 void Client::threadClose() {
-    end = true;
+	end = true;
 }
 
 void Client::setPizza(Pizza *p) {
-    pizza = p;
+	pizza = p;
 }

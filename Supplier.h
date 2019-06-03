@@ -15,25 +15,21 @@ using namespace std;
 
 class Supplier {
 public:
-    Supplier();
+	Supplier(int numb, mutex *mutexFridge, int *fridge, mutex *mutexWriter);
 
-    Supplier(const Supplier &orig);
+	~Supplier();
 
-    Supplier(int numb, mutex *mutexFridge, int *fridge);
+	void threadSupplier();
 
-    virtual ~Supplier();
-
-    void threadSupplier();
-
-    void threadClose();
+	void threadClose();
 
 private:
-    bool end;
-    float breaks;
-    thread *threadS;
-    int numb;
-    mutex *mutexFridge;
-    int *fridge;
+	bool end = false;
+	float breaks = 500000;
+	thread *threadS;
+	int numb;
+	mutex *mutexFridge, *mutexWriter;
+	int *fridge;
 };
 
 #endif /* SUPPLIER_H */

@@ -5,24 +5,20 @@
 
 class Order {
 public:
-    Order();
+	Order(int c, int s, const std::vector<int> &ing);
 
-    Order(int c, int s, const std::vector<int>& ing);
+	~Order();
 
-    Order(const Order &orig);
+	std::vector<int> getIngredients();
 
-    virtual ~Order();
+	int getClient();
 
-    std::vector<int> getIngredients();
-
-    int getClient();
-
-    int getSize();
+	int getSize();
 
 private:
-    std::vector<int> ingredients;
-    int client;
-    int size;
+	std::vector<int> ingredients;
+	int client;
+	int size;
 
 };
 

@@ -16,28 +16,24 @@ using namespace std;
 
 class Waiter {
 public:
-    Waiter();
+	Waiter(int numb, mutex *mutexCountertop, Pizza **countertop, vector<Client *> clients, mutex *mutexWriter);
 
-    Waiter(const Waiter &orig);
+	~Waiter();
 
-    Waiter(int numb, mutex *mutexCountertop, Pizza **countertop, vector<Client *> clients);
+	void threadWaiter();
 
-    virtual ~Waiter();
-
-    void threadWaiter();
-
-    void threadClose();
+	void threadClose();
 
 private:
-    bool end;
-    Pizza *pizza;
-    float breaks;
-    thread *threadW;
+	bool end = false;
+	int breaks = 500000;
+	Pizza *pizza = nullptr;
 
-    int numb;
-    mutex *mutexCountertop;
-    Pizza **countertop;
-    vector<Client *> clients;
+	thread *threadW;
+	int numb;
+	mutex *mutexCountertop, *mutexWriter;
+	Pizza **countertop;
+	vector<Client *> clients;
 
 };
 

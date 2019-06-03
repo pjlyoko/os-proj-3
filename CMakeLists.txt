@@ -14,8 +14,8 @@ include_directories(.)
 add_executable(SO2
         Client.cpp
         Client.h
-        Cook.cpp
-        Cook.h
+        Pizzaiolo.cpp
+        Pizzaiolo.h
         main.cpp
         Order.cpp
         Order.h

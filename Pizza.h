@@ -3,13 +3,9 @@
 
 class Pizza {
 public:
-    Pizza();
+	explicit Pizza(int c);
 
-    explicit Pizza(int c);
-
-    Pizza(const Pizza &orig);
-
-    virtual ~Pizza();
+    ~Pizza();
 
     int getClient();
 

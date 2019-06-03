@@ -18,31 +18,29 @@ using namespace std;
 
 class Client {
 public:
-    Client();
+	Client(int numb, mutex *mutexChairs, bool *chairs, mutex *mutexOrdersList, vector<Order *> *ordersList,
+		   mutex *mutexWriter);
 
-    Client(const Client &orig);
+	~Client();
 
-    Client(int numb, mutex *mutexChairs, bool *chairs, mutex *mutexOrdersList, vector<Order *> *ordersList);
+	void threadClient();
 
-    virtual ~Client();
+	void threadClose();
 
-    void threadClient();
+	void print_queue(queue<Order *> q);
 
-    void threadClose();
-
-    void print_queue(queue<Order *> q);
-
-    void setPizza(Pizza *p);
+	void setPizza(Pizza *p);
 
 private:
-    Pizza *pizza;
-    bool end;
-    int breaks;
-    thread *threadC;
-    int numb;
-    mutex *mutexChairs, *mutexOrdersList;
-    bool *chairs;
-    vector<Order *> *ordersList;
+	Pizza *pizza = nullptr;
+	bool end = false;
+	int breaks = 500000;
+
+	thread *threadC;
+	int numb;
+	mutex *mutexChairs, *mutexOrdersList, *mutexWriter;
+	bool *chairs;
+	vector<Order *> *ordersList;
 };
 
 #endif /* CLIENT_H */
