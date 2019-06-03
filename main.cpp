@@ -7,15 +7,37 @@
 #include <iostream>
 #include <thread>
 #include <ncurses.h>
+#include <csignal>
 
 using namespace std;
 
+void windowResizeHandler(int signal) {
+	endwin();
+	refresh();
+	clear();
+}
+
 int main() {
+	signal(SIGWINCH, windowResizeHandler);
+
 	srand(time(nullptr));
-	initscr();
-	noecho();
+	auto win = initscr();
 	curs_set(0);
-	char x;
+
+	char x = '0';
+
+	int x_max = 0, y_max = 0;
+
+	getmaxyx(win, y_max, x_max);
+	if(x_max < 100 || y_max < 30) {
+		while(x_max < 100 || y_max < 30) {
+			mvprintw(y_max / 2, x_max / 2 - 12, "Powieksz okno terminala.");
+			getmaxyx(win, y_max, x_max);
+			sleep(1);
+		}
+		windowResizeHandler(0);
+	}
+
 
 	vector<Pizzaiolo *> pizzaiolos;
 	vector<Client *> clients;
@@ -37,7 +59,6 @@ int main() {
 	bool chairs[10]{
 			true, true, true, true, true, true, true, true, true, true
 	};
-	mvprintw(0, 0, "Dziala");
 
 	//tworzenie wątków
 	clients.reserve(11);
