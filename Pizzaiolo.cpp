@@ -53,8 +53,10 @@ void Pizzaiolo::threadStart() {
 		while(!mutexOrdersList->try_lock() && !end);
 
 		if(!ordersList->empty()) {
-
+			// TODO: Chyba trzeba to objąć blokadą, aby nie dopuścić do wzięcia dwa razy tego samego zamówienia.
 			order = ordersList->front();
+			// usuwa zamówienie z listy zamówień
+			ordersList->erase(remove(ordersList->begin(), ordersList->end(), order));
 
 			for(int i = 0; i < order->getIngredients().size(); i++) {
 				ingredients.push_back(order->getIngredients()[i]);
@@ -62,8 +64,9 @@ void Pizzaiolo::threadStart() {
 
 			client = order->getClient();
 			size = order->getSize();
+
+			delete order;
 			order = nullptr;
-			ordersList->erase(ordersList->begin());
 
 			mutexWriter->lock();
 			mvprintw(0, 50, "Zamowienia");

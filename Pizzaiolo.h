@@ -9,6 +9,7 @@
 #include <unistd.h>
 #include <cmath>
 #include <chrono>
+#include <algorithm>
 
 using namespace std;
 
