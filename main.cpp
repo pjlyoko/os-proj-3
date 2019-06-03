@@ -13,6 +13,8 @@ using namespace std;
 int main() {
 	srand(time(nullptr));
 	initscr();
+	noecho();
+	curs_set(0);
 	char x;
 
 	vector<Pizzaiolo *> pizzaiolos;
