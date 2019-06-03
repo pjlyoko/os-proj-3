@@ -105,6 +105,17 @@ void Client::makeOrder() {
 	}
 }
 
+void Client::waitForDelivery() {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(10 + numb, 0, "Klient %d: Czeka na pizze           ", numb);
+	}
+
+	while(pizza == nullptr && !end) {
+		usleep(breaks);
+	}
+}
+
 void Client::threadClient() {
 	bool haveChair;
 	vector<int> ingredients;
@@ -127,12 +138,7 @@ void Client::threadClient() {
 		makeOrder();
 
 		//Czekanie
-		mutexWriter->lock();
-		mvprintw(10 + numb, 0, "Klient %d: Czeka na pizze           ", numb);
-		mutexWriter->unlock();
-		while(pizza == nullptr && !end) {
-			usleep(breaks);
-		}
+		waitForDelivery();
 
 		//Jedzenie
 		begin = chrono::steady_clock::now();
