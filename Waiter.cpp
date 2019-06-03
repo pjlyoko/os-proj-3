@@ -13,27 +13,22 @@ Waiter::~Waiter() {
 	delete threadW;
 }
 
-void Waiter::threadWaiter() {
-	bool gotPizza;
-	float deliverTime;
-	chrono::_V2::steady_clock::time_point begin, dur;
-	int counterSize = 10;
+void Waiter::takePizza(int counterSize) {
+	bool gotPizza = false;
 
-	while(!end) {
-		gotPizza = false;
-		deliverTime = (rand() % 10) / 5 + 1;
-
-		//Podnosi pizze
-		while(!gotPizza) {
-
-			mutexWriter->lock();
+	while(!gotPizza) {
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
 			mvprintw(numb + 25, 0, "Kelner %d: Czeka na dostęp do blatu    ", numb);
-			mutexWriter->unlock();
-			while(!mutexCountertop->try_lock() && !end);
+		}
 
-			mutexWriter->lock();
-			mvprintw(numb + 25, 0, "Kelner %d: Czeka na pizze do zaniesienia ", numb);
-			mutexWriter->unlock();
+		{
+			unique_lock<mutex> lk(*mutexCountertop);
+
+			{
+				unique_lock<mutex> lk_write(*mutexWriter);
+				mvprintw(numb + 25, 0, "Kelner %d: Czeka na pizze do zaniesienia ", numb);
+			}
 
 			for(int i = 0; i < counterSize; i++) {
 				if(countertop[i] != nullptr) {
@@ -41,44 +36,64 @@ void Waiter::threadWaiter() {
 					gotPizza = true;
 					countertop[i] = nullptr;
 
-					mutexWriter->lock();
-					for(int i = 0; i < 20; i++) {
-						mvprintw(21, 50 + 3 * i, "   ");
-					}
-					mvprintw(20, 50, "Blat");
-					for(int i = 0; i < counterSize; i++) {
-						if(countertop[i] != nullptr) {
-							mvprintw(21, 50 + 3 * i, "%d", countertop[i]->getClient());
+					{
+						unique_lock<mutex> lk_write(*mutexWriter);
+
+						for(int j = 0; j < 20; j++) {
+							mvprintw(21, 50 + 3 * j, "   ");
+						}
+						mvprintw(20, 50, "Blat");
+						for(int j = 0; j < counterSize; j++) {
+							if(countertop[j] != nullptr) {
+								mvprintw(21, 50 + 3 * j, "%d", countertop[j]->getClient());
+							}
 						}
 					}
-					mutexWriter->unlock();
 
-					mutexCountertop->unlock();
 					break;
 				}
 			}
-			if(gotPizza)
-				break;
 
-			mutexCountertop->unlock();
-			usleep(breaks);
 		}
+
+		if(gotPizza) {
+			break;
+		}
+
+		usleep(breaks);
+	}
+}
+
+void Waiter::deliverPizza() {
+	float deliverTime = (rand() % 10) / 5. + 1;
+	auto begin = chrono::steady_clock::now();
+	auto dur = chrono::steady_clock::now();
+
+	while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < deliverTime && !end) {
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+			mvprintw(numb + 25, 0, "Kelner %d: Zanosi pizze klientowi %d%%            ", numb, (int) round(
+					chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / deliverTime * 100));
+		}
+
+		usleep(breaks);
+		dur = chrono::steady_clock::now();
+	}
+
+	clients[pizza->getClient()]->setPizza(pizza);
+	pizza = nullptr;
+}
+
+
+void Waiter::threadWaiter() {
+	int counterSize = 10;
+
+	while(!end) {
+		//Podnosi pizze
+		takePizza(counterSize);
 
 		//Zanosi pizze
-		begin = chrono::steady_clock::now();
-		dur = chrono::steady_clock::now();
-
-		while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < deliverTime && !end) {
-			mutexWriter->lock();
-			mvprintw(numb + 25, 0, "Kelner %d: Zanosi pizze klientowi %d %%           ", numb, (int) round(
-					chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / deliverTime * 100));
-			mutexWriter->unlock();
-
-			usleep(breaks);
-			dur = chrono::steady_clock::now();
-		}
-		clients[pizza->getClient()]->setPizza(pizza);
-		pizza = nullptr;
+		deliverPizza();
 	}
 }
 

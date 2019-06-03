@@ -35,6 +35,8 @@ private:
 	Pizza **countertop;
 	vector<Client *> clients;
 
+	void takePizza(int counterSize);
+	void deliverPizza();
 };
 
 #endif /* WAITER_H */
