@@ -67,6 +67,44 @@ void Client::takeASeat(int chairsSize) {
 	}
 }
 
+void Client::makeOrder() {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(10 + numb, 0, "Klient %d: Sklada zamowienie           ", numb);
+	}
+
+	usleep(breaks);
+
+	vector<int> ingredients;
+
+	{
+		unique_lock<mutex> lk(*mutexOrdersList);
+
+		ingredients.push_back(0); //ciasto i inne składniki
+		int numberOfIngredients = random() % 4 + 3;
+		for(int i = 1; i < numberOfIngredients; i++) {
+			ingredients.push_back(random() % 9 + 1);
+		}
+
+		auto order = new Order(numb, random() % 2 + 1, ingredients);
+		ordersList->push_back(order);
+
+		ingredients.clear();
+
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+
+			for(int i = 0; i < 20; i++) {
+				mvprintw(1, 50 + 3 * i, "   ");
+			}
+			mvprintw(0, 50, "Zamowienia");
+			for(int i = 0; i < ordersList->size(); i++) {
+				mvprintw(1, 50 + 3 * i, "%d", ordersList->operator[](i)->getClient());
+			}
+		}
+	}
+}
+
 void Client::threadClient() {
 	bool haveChair;
 	vector<int> ingredients;
@@ -86,36 +124,7 @@ void Client::threadClient() {
 		takeASeat(chairsSize);
 
 		//Składanie zamówienia
-
-		mutexWriter->lock();
-		mvprintw(10 + numb, 0, "Klient %d: Sklada zamowienie           ", numb);
-		mutexWriter->unlock();
-
-		usleep(breaks);
-		while(!mutexOrdersList->try_lock() && !end);
-
-		ingredients.push_back(0); //ciasto i inne składniki
-		int numberOfIngredients = random() % 4 + 3;
-		for(int i = 1; i < numberOfIngredients; i++) {
-			ingredients.push_back(random() % 9 + 1);
-		}
-
-		order = new Order(numb, random() % 2 + 1, ingredients);
-		ordersList->push_back(order);
-
-		ingredients.clear();
-		mutexWriter->lock();
-		for(int i = 0; i < 20; i++) {
-			mvprintw(1, 50 + 3 * i, "   ");
-		}
-		mvprintw(0, 50, "Zamowienia");
-		for(int i = 0; i < ordersList->size(); i++) {
-			mvprintw(1, 50 + 3 * i, "%d", ordersList->operator[](i)->getClient());
-		}
-		mutexWriter->unlock();
-
-		mutexOrdersList->unlock();
-		usleep(breaks);
+		makeOrder();
 
 		//Czekanie
 		mutexWriter->lock();

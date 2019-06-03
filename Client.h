@@ -45,6 +45,7 @@ private:
 	int chairTaken = -1;
 
 	void takeASeat(int chairsSize);
+	void makeOrder();
 };
 
 #endif /* CLIENT_H */
