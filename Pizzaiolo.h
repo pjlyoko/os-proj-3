@@ -49,9 +49,9 @@ private:
 	void takeOrder();
 	void takeIngredients(int fridgeSize);
 	void takeTool(int toolsSize);
-	void preparePizza(int preparingTime);
+	void preparePizza(float preparingTime);
 	void returnTool(int toolsSize);
-	void bakePizza(int pizzaSize, int bakeTime, int furnacesSize);
+	void bakePizza(int pizzaSize, float bakeTime, int furnacesSize);
 	void takePizzaFromFurnace(int pizzaSize, int furnacesSize);
 	void putPizzaOnCountertop(int client, int countertopSize);
 };

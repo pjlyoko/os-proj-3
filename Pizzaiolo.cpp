@@ -46,7 +46,7 @@ void Pizzaiolo::takeIngredients(int fridgeSize) {
 void Pizzaiolo::takeTool(int toolsSize) {
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
-		mvprintw(numb, 0, "Kucharz %d: podnosi narzedzia               ", numb);
+		mvprintw(numb, 0, "Kucharz %d: Podnosi narzedzie               ", numb);
 	}
 
 	bool hasTool = false;
@@ -83,7 +83,7 @@ void Pizzaiolo::takeTool(int toolsSize) {
 	}
 }
 
-void Pizzaiolo::preparePizza(int preparingTime) {
+void Pizzaiolo::preparePizza(float preparingTime) {
 	auto begin = chrono::steady_clock::now();
 	auto dur = chrono::steady_clock::now();
 
@@ -124,7 +124,7 @@ void Pizzaiolo::returnTool(int toolsSize) {
 	}
 }
 
-void Pizzaiolo::bakePizza(int pizzaSize, int bakeTime, int furnacesSize) {
+void Pizzaiolo::bakePizza(int pizzaSize, float bakeTime, int furnacesSize) {
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
 		mvprintw(numb, 0, "Kucharz %d: Wklada pizze do pieca          ", numb);
@@ -246,7 +246,6 @@ void Pizzaiolo::putPizzaOnCountertop(int client, int countertopSize) {
 }
 
 void Pizzaiolo::threadStart() {
-	bool haveTools, haveFurnace, havePlace;
 	float preparingTime = 3;
 	float bakeTime = 5;
 	int pizzaSize; //1 - mala, 2 - duza
@@ -292,7 +291,7 @@ void Pizzaiolo::threadStart() {
 			{
 				unique_lock<mutex> lk_write(*mutexWriter);
 
-				mvprintw(0, 50, "Zamowienia");
+				mvprintw(0, 50, "Zamowienia oczekujace");
 				for(int i = 0; i < 20; i++) {
 					mvprintw(1, 50 + 3 * i, "   ");
 				}
