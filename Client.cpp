@@ -106,12 +106,17 @@ void Client::makeOrder() {
 }
 
 void Client::waitForDelivery() {
-	{
-		unique_lock<mutex> lk_write(*mutexWriter);
-		mvprintw(10 + numb, 0, "Klient %d: Czeka na pizze           ", numb);
-	}
+	chrono::steady_clock::time_point begin = chrono::steady_clock::now(), dur;
 
 	while(pizza == nullptr && !end) {
+	    dur = chrono::steady_clock::now();
+
+        {
+            unique_lock<mutex> lk_write(*mutexWriter);
+            mvprintw(10 + numb, 0, "Klient %d: Czeka na pizze [%d s]          ", numb,
+                    chrono::duration_cast<chrono::seconds>(dur - begin).count());
+        }
+
 		usleep(breaks);
 	}
 }
