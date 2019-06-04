@@ -1,7 +1,6 @@
 #include "Pizzaiolo.h"
 #include "Client.h"
 #include "Waiter.h"
-#include "Supplier.h"
 #include "Pizza.h"
 #include "Chair.h"
 #include <vector>

@@ -21,8 +21,6 @@ add_executable(SO2
         Order.h
         Pizza.cpp
         Pizza.h
-        Supplier.cpp
-        Supplier.h
         Waiter.cpp
         Waiter.h Chair.cpp Chair.h)
 

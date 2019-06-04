@@ -32,8 +32,6 @@ public:
 
 	void threadClose();
 
-	void print_queue(queue<Order *> q);
-
 	void setPizza(Pizza *p);
 
 	inline int getClientType() { return clientType; };

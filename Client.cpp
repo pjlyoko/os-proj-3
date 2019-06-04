@@ -17,18 +17,6 @@ Client::~Client() {
 	delete threadC;
 }
 
-void Client::print_queue(queue<Order *> q) {
-	int i = 0;
-	auto *que = new queue<Order *>(std::move(q));
-	while(!que->empty()) {
-		mvprintw(1, 50 + 3 * i, "%d", que->front()->getClient());
-		i++;
-		que->pop();
-	}
-	delete que;
-
-}
-
 void Client::printChairs() {
 	unique_lock<mutex> lk_write(*mutexWriter);
 
