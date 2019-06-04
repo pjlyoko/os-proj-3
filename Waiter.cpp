@@ -108,10 +108,10 @@ void Waiter::threadWaiter() {
     int counterSize = 10;
 
     while (!end) {
-        //Podnosi pizze
+        // Podnosi pizzę z blatu
         takePizza(counterSize);
 
-        //Zanosi pizze
+        // Zanosi pizzę klientowi
         deliverPizza();
     }
 }

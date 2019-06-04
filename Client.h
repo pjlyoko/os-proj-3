@@ -10,6 +10,7 @@
 #include <queue>
 #include <vector>
 #include <cstdlib>
+#include <condition_variable>
 
 using namespace std;
 
@@ -20,8 +21,10 @@ class Chair;
 
 class Client {
 public:
-	Client(int numb, mutex *mutexChairs, vector<Chair *> *chairs, mutex *mutexOrdersList, vector<Order *> *ordersList,
-		   mutex *mutexWriter, vector<Client *> *otherClients);
+	Client(int numb, mutex *mutexChairs, vector<Chair *> *chairs,
+			mutex *mutexOrdersList, vector<Order *> *ordersList, condition_variable *cvClientMadeAnOrder,
+			mutex *mutexWriter,
+			vector<Client *> *otherClients);
 
 	~Client();
 
@@ -49,6 +52,7 @@ private:
 	vector<Order *> *ordersList;
 	vector<Client *> *otherClients;
 	vector<Chair *> *chairs;
+	condition_variable *cvClientMadeAnOrder;
 
 	int chairTaken = -1;
 	bool oughtToLeave = false;

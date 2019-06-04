@@ -19,7 +19,8 @@ using namespace std;
 
 class Pizzaiolo {
 public:
-	Pizzaiolo(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList, mutex *mutexFridge, int *fridge,
+	Pizzaiolo(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList, condition_variable *cvClientMadeAnOrder,
+			  mutex *mutexFridge, int *fridge,
 			  mutex *mutexTools, bool *tools, mutex *mutexFurnaces, int *furnace, mutex *mutexCountertop,
 			  Pizza **countertop, mutex *mutexWriter, condition_variable *cv);
 
@@ -42,17 +43,23 @@ private:
 	int *furnaces;
 	Pizza **countertop;
 	vector<Order *> *ordersList;
-	condition_variable *cv;
+	condition_variable *cv, *cvClientMadeAnOrder;
 
 	int toolTaken = -1;
 	int furnaceUsed = -1;
 
 	void takeIngredients(int fridgeSize);
+
 	void takeTool(int toolsSize);
+
 	void preparePizza(float preparingTime);
+
 	void returnTool(int toolsSize);
+
 	void bakePizza(int pizzaSize, float bakeTime, int furnacesSize);
+
 	void takePizzaFromFurnace(int pizzaSize, int furnacesSize);
+
 	void putPizzaOnCountertop(int client, int countertopSize);
 };
 

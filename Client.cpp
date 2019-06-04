@@ -2,9 +2,12 @@
 #include "Client.h"
 #include "Chair.h"
 
-Client::Client(int numb, mutex *mutexChairs, vector<Chair *> *chairs, mutex *mutexOrdersList,
-			   vector<Order *> *ordersList, mutex *mutexWriter, vector<Client *> *otherClients) :
-		numb(numb), mutexOrdersList(mutexOrdersList), ordersList(ordersList), mutexChairs(mutexChairs), chairs(chairs),
+Client::Client(int numb, mutex *mutexChairs, vector<Chair *> *chairs,
+			   mutex *mutexOrdersList, vector<Order *> *ordersList, condition_variable *cvClientMadeAnOrder,
+			   mutex *mutexWriter,
+			   vector<Client *> *otherClients) :
+		numb(numb), mutexOrdersList(mutexOrdersList), ordersList(ordersList), cvClientMadeAnOrder(cvClientMadeAnOrder),
+		mutexChairs(mutexChairs), chairs(chairs),
 		mutexWriter(mutexWriter), otherClients(otherClients) {
 	threadC = new thread(&Client::threadClient, this);
 }
@@ -125,7 +128,7 @@ void Client::makeOrder() {
 	{
 		unique_lock<mutex> lk(*mutexOrdersList);
 
-		ingredients.push_back(0); //ciasto i inne składniki
+		ingredients.push_back(0); // Składniki
 		int numberOfIngredients = random() % 4 + 3;
 		for(int i = 1; i < numberOfIngredients; i++) {
 			ingredients.push_back(random() % 9 + 1);
@@ -148,6 +151,7 @@ void Client::makeOrder() {
 			}
 		}
 	}
+	cvClientMadeAnOrder->notify_one();
 }
 
 void Client::waitForDelivery() {
@@ -236,21 +240,22 @@ void Client::threadClient() {
 
 		usleep(breaks);
 
-		//Siadanie
+		// Zajęcie miejsca
 		takeASeat();
 
+		// Jeśli klient się zdenerwował, opuszcza lokal w trybie now.
 		if(oughtToLeave) {
 			leaveImmediately();
 			continue;
 		}
 
-		//Składanie zamówienia
+		// Składanie zamówienia
 		makeOrder();
 
-		//Czekanie
+		// Oczekiwanie
 		waitForDelivery();
 
-		//Jedzenie
+		// Posiłek
 		eat();
 
 		// Wychodzenie
