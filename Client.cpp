@@ -29,14 +29,17 @@ void Client::print_queue(queue<Order *> q) {
 void Client::takeASeat(int chairsSize) {
 	bool hasChair = false;
 
-	while(!hasChair && !end) {
+    chrono::steady_clock::time_point begin = chrono::steady_clock::now(), dur;
+    while(!hasChair && !end) {
+	    dur = chrono::steady_clock::now();
+	    auto t = chrono::duration_cast<chrono::seconds>(dur - begin).count();
+
 		{
 			unique_lock<mutex> lk_write(*mutexWriter);
-			mvprintw(10 + numb, 0, "Klient %d: Szuka miejsca do siedzenia", numb);
+			mvprintw(10 + numb, 0, "Klient %2d: Szuka miejsca do siedzenia [%d s]", numb, t);
 		}
 
 		usleep(breaks);
-
 
 		{
 			unique_lock<mutex> lk(*mutexChairs);
@@ -63,6 +66,13 @@ void Client::takeASeat(int chairsSize) {
 
 		if(hasChair) {
 			break;
+		} else {
+		    // Randomly decide whether client stays or leaves
+		    // 1% chance that they leave
+		    if(random() % 100 == 42) {
+                oughtToLeave = true;
+                break;
+		    }
 		}
 	}
 }
@@ -70,7 +80,7 @@ void Client::takeASeat(int chairsSize) {
 void Client::makeOrder() {
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
-		mvprintw(10 + numb, 0, "Klient %d: Sklada zamowienie           ", numb);
+		mvprintw(10 + numb, 0, "Klient %2d: Sklada zamowienie                ", numb);
 	}
 
 	usleep(breaks);
@@ -113,7 +123,7 @@ void Client::waitForDelivery() {
 
         {
             unique_lock<mutex> lk_write(*mutexWriter);
-            mvprintw(10 + numb, 0, "Klient %d: Czeka na pizze [%d s]          ", numb,
+            mvprintw(10 + numb, 0, "Klient %2d: Czeka na pizze [%d s]          ", numb,
                     chrono::duration_cast<chrono::seconds>(dur - begin).count());
         }
 
@@ -130,7 +140,7 @@ void Client::eat() {
 	while(chrono::duration_cast<chrono::duration<double> >(dur - begin).count() < eatTime && !end) {
 		{
 			unique_lock<mutex> lk_write(*mutexWriter);
-			mvprintw(numb + 10, 0, "Klient %d: Je %d %%                ", numb, (int) round(
+			mvprintw(numb + 10, 0, "Klient %2d: Je %d %%                ", numb, (int) round(
 					chrono::duration_cast<chrono::duration<double> >(dur - begin).count() / eatTime * 100));
 		}
 
@@ -145,7 +155,7 @@ void Client::eat() {
 void Client::leave(int chairsSize) {
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
-		mvprintw(10 + numb, 0, "Klient %d: Wstaje          ", numb);
+		mvprintw(10 + numb, 0, "Klient %2d: Wstaje          ", numb);
 	}
 
 	usleep(breaks);
@@ -166,6 +176,31 @@ void Client::leave(int chairsSize) {
 	}
 }
 
+void Client::leaveImmediately() {
+    {
+        unique_lock<mutex> lk_write(*mutexWriter);
+        mvprintw(10 + numb, 0, "Klient %2d:                                 ", numb);
+        if(has_colors()) {
+            attron(COLOR_PAIR(2));
+            mvprintw(10 + numb, 11, "WYCHODZI Z HUKIEM");
+            attroff(COLOR_PAIR(2));
+        } else {
+            mvprintw(10 + numb, 11, "WYCHODZI Z HUKIEM");
+        }
+    }
+
+    usleep(3 * breaks);
+
+    {
+        unique_lock<mutex> lk_write(*mutexWriter);
+        mvprintw(10 + numb, 0, "Klient %2d: ...                         ", numb);
+    }
+
+    usleep(10 * breaks);
+
+    oughtToLeave = false;
+}
+
 void Client::threadClient() {
 	int chairsSize = 10;
 
@@ -174,6 +209,11 @@ void Client::threadClient() {
 
 		//Siadanie
 		takeASeat(chairsSize);
+
+		if(oughtToLeave) {
+		    leaveImmediately();
+		    continue;
+		}
 
 		//Składanie zamówienia
 		makeOrder();

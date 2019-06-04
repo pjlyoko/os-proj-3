@@ -24,6 +24,11 @@ int main() {
     srandom(time(nullptr));
     auto win = initscr();
     curs_set(0);
+    if(has_colors()) {
+        start_color();
+        init_pair(1, COLOR_BLACK, COLOR_WHITE);
+        init_pair(2, COLOR_WHITE, COLOR_RED);
+    }
 
     char x;
 
@@ -73,8 +78,8 @@ int main() {
         clients.push_back(new Client(i, &mutexChairs, chairs, &mutexOrdersList, &ordersList, &mutexWriter));
     }
 
-    pizzaiolos.reserve(7);
-    for(int i = 0; i < 7; i++) {
+    pizzaiolos.reserve(3);
+    for(int i = 0; i < 3; i++) {
         pizzaiolos.push_back(
                 new Pizzaiolo(i, &mutexOrdersList, &ordersList, &mutexFridge, fridge, &mutexTools, tools, &mutexFurnaces,
                               furnace, &mutexCountertop, countertop, &mutexWriter, &cv));

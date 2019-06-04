@@ -43,12 +43,14 @@ private:
 	vector<Order *> *ordersList;
 
 	int chairTaken = -1;
+	bool oughtToLeave = false;
 
 	void takeASeat(int chairsSize);
 	void makeOrder();
 	void waitForDelivery();
 	void eat();
 	void leave(int chairsSize);
+	void leaveImmediately();
 };
 
 #endif /* CLIENT_H */
