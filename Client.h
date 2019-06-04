@@ -16,10 +16,12 @@ using namespace std;
 #ifndef CLIENT_H
 #define CLIENT_H
 
+class Chair;
+
 class Client {
 public:
-	Client(int numb, mutex *mutexChairs, bool *chairs, mutex *mutexOrdersList, vector<Order *> *ordersList,
-		   mutex *mutexWriter);
+	Client(int numb, mutex *mutexChairs, vector<Chair *> *chairs, mutex *mutexOrdersList, vector<Order *> *ordersList,
+		   mutex *mutexWriter, vector<Client *> *otherClients);
 
 	~Client();
 
@@ -31,25 +33,33 @@ public:
 
 	void setPizza(Pizza *p);
 
+	inline int getClientType() { return clientType; };
+
+	inline int getClientNumber() { return numb; };
+
 private:
 	Pizza *pizza = nullptr;
 	bool end = false;
 	int breaks = 500000;
+	int clientType = random() % 2;
 
 	thread *threadC;
 	int numb;
 	mutex *mutexChairs, *mutexOrdersList, *mutexWriter;
-	bool *chairs;
 	vector<Order *> *ordersList;
+	vector<Client *> *otherClients;
+	vector<Chair *> *chairs;
 
 	int chairTaken = -1;
 	bool oughtToLeave = false;
 
-	void takeASeat(int chairsSize);
+	void printChairs();
+
+	void takeASeat();
 	void makeOrder();
 	void waitForDelivery();
 	void eat();
-	void leave(int chairsSize);
+	void leave();
 	void leaveImmediately();
 };
 

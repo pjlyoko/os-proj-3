@@ -24,7 +24,7 @@ add_executable(SO2
         Supplier.cpp
         Supplier.h
         Waiter.cpp
-        Waiter.h)
+        Waiter.h Chair.cpp Chair.h)
 
 target_link_libraries(SO2 ${CURSES_LIBRARIES})
 target_link_libraries(SO2 Threads::Threads)

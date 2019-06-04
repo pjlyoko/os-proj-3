@@ -3,6 +3,7 @@
 #include "Waiter.h"
 #include "Supplier.h"
 #include "Pizza.h"
+#include "Chair.h"
 #include <vector>
 #include <iostream>
 #include <thread>
@@ -28,6 +29,8 @@ int main() {
         start_color();
         init_pair(1, COLOR_BLACK, COLOR_WHITE);
         init_pair(2, COLOR_WHITE, COLOR_RED);
+        init_pair(3, COLOR_BLACK, COLOR_GREEN);
+        init_pair(4, COLOR_WHITE, COLOR_BLUE);
     }
 
     char x;
@@ -49,10 +52,8 @@ int main() {
     vector<Client *> clients;
     vector<Waiter *> waiters;
     vector<Order *> ordersList;
+    vector<Chair *> chairs;
     condition_variable cv;
-
-//    vector<Order *> * ordersList;
-//    ordersList = new vector<Order *>();
 
 
     mutex mutexOrdersList, mutexFridge, mutexTools, mutexFurnaces, mutexCountertop, mutexChairs, mutexWriter;
@@ -68,14 +69,15 @@ int main() {
             nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr
     };
 
-    bool chairs[10]{
-            true, true, true, true, true, true, true, true, true, true
-    };
+    chairs.reserve(10);
+    for(int i = 0; i < 10; i++) {
+    	chairs.push_back(new Chair());
+    }
 
     //tworzenie wątków
     clients.reserve(11);
     for(int i = 0; i < 11; i++) {
-        clients.push_back(new Client(i, &mutexChairs, chairs, &mutexOrdersList, &ordersList, &mutexWriter));
+        clients.push_back(new Client(i, &mutexChairs, &chairs, &mutexOrdersList, &ordersList, &mutexWriter, &clients));
     }
 
     pizzaiolos.reserve(3);
@@ -116,7 +118,9 @@ int main() {
         clients.pop_back();
     }
 
-
+    for(int i = chairs.size() - 1; i > 0; i--) {
+    	chairs.pop_back();
+    }
 
     endwin();
     return 0;
