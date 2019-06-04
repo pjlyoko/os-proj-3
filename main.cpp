@@ -80,8 +80,8 @@ int main() {
         clients.push_back(new Client(i, &mutexChairs, &chairs, &mutexOrdersList, &ordersList, &mutexWriter, &clients));
     }
 
-    pizzaiolos.reserve(3);
-    for(int i = 0; i < 3; i++) {
+    pizzaiolos.reserve(5);
+    for(int i = 0; i < 5; i++) {
         pizzaiolos.push_back(
                 new Pizzaiolo(i, &mutexOrdersList, &ordersList, &mutexFridge, fridge, &mutexTools, tools, &mutexFurnaces,
                               furnace, &mutexCountertop, countertop, &mutexWriter, &cv));
@@ -100,7 +100,7 @@ int main() {
             clear();
             x = ' ';
         }
-    } while(x != 'x');
+    } while(x != 'x' && x != 'q');
 
     //Zamykanie wątków i konczenie
     for(int i = waiters.size() - 1; i > 0; i--) {

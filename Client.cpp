@@ -219,7 +219,7 @@ void Client::leaveImmediately() {
 
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
-		mvprintw(10 + numb, 11, "...                              ");
+		mvprintw(10 + numb, 0, "Klient %2d: ...                              ", numb);
 	}
 
 	usleep(10 * breaks);
