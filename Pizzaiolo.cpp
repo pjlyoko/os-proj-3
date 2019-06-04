@@ -26,6 +26,16 @@ Pizzaiolo::~Pizzaiolo() {
 	delete threadC;
 }
 
+void Pizzaiolo::printFurnacesStatus(int furnacesSize) {
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(15, 50, "Piece - wolne miejsca");
+		for(int j = 0; j < furnacesSize; j++) {
+			mvprintw(16, 50 + 3 * j, "%d", furnaces[j]);
+		}
+	}
+}
+
 void Pizzaiolo::takeIngredients(int fridgeSize) {
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
@@ -42,7 +52,7 @@ void Pizzaiolo::takeIngredients(int fridgeSize) {
 
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
-		mvprintw(5, 50, "Lodowka");
+		mvprintw(5, 50, "Lodowka - zuzyte zasoby");
 		for(int i = 0; i < fridgeSize; i++) {
 			mvprintw(6, 50 + 5 * i, "%d", fridge[i]);
 		}
@@ -149,13 +159,7 @@ void Pizzaiolo::bakePizza(int pizzaSize, float bakeTime, int furnacesSize) {
 				furnaces[i] -= pizzaSize;
 				furnaceUsed = i;
 
-				{
-					unique_lock<mutex> lk_write(*mutexWriter);
-					mvprintw(15, 50, "Piece");
-					for(int j = 0; j < furnacesSize; j++) {
-						mvprintw(16, 50 + 3 * j, "%d", furnaces[j]);
-					}
-				}
+				printFurnacesStatus(furnacesSize);
 
 				mutexFurnaces->unlock();
 				break;
@@ -199,13 +203,7 @@ void Pizzaiolo::takePizzaFromFurnace(int pizzaSize, int furnacesSize) {
 	furnaces[furnaceUsed] += pizzaSize;
 	furnaceUsed = -1;
 
-	{
-		unique_lock<mutex> lk_write(*mutexWriter);
-		mvprintw(15, 50, "Piece");
-		for(int j = 0; j < furnacesSize; j++) {
-			mvprintw(16, 50 + 3 * j, "%d", furnaces[j]);
-		}
-	}
+	printFurnacesStatus(furnacesSize);
 }
 
 void Pizzaiolo::putPizzaOnCountertop(int client, int countertopSize) {
@@ -232,7 +230,7 @@ void Pizzaiolo::putPizzaOnCountertop(int client, int countertopSize) {
 						for(int j = 0; j < 20; j++) {
 							mvprintw(21, 50 + 3 * j, "   ");
 						}
-						mvprintw(20, 50, "Blat");
+						mvprintw(20, 50, "Pizze oczekujace na wydanie");
 						for(int j = 0; j < countertopSize; j++) {
 							if(countertop[j] != nullptr) {
 								mvprintw(21, 50 + 3 * j, "%d", countertop[j]->getClient());

@@ -20,7 +20,7 @@ Client::~Client() {
 void Client::printChairs() {
 	unique_lock<mutex> lk_write(*mutexWriter);
 
-	mvprintw(25, 50, "Krzesla");
+	mvprintw(25, 50, "Krzesla typu filozof");
 	for(int j = 0; j < chairs->size(); j++) {
 		if(chairs->at(j)->getClientType() != -1) {
 			if(has_colors()) {
@@ -36,7 +36,6 @@ void Client::printChairs() {
 			mvprintw(26, 50 + 3 * j, "__");
 		}
 	}
-
 }
 
 void Client::takeASeat() {

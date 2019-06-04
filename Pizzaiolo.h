@@ -48,6 +48,10 @@ private:
 	int toolTaken = -1;
 	int furnaceUsed = -1;
 
+
+	void printFurnacesStatus(int furnacesSize);
+
+
 	void takeIngredients(int fridgeSize);
 
 	void takeTool(int toolsSize);

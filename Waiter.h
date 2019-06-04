@@ -17,7 +17,8 @@ using namespace std;
 
 class Waiter {
 public:
-	Waiter(int numb, mutex *mutexCountertop, Pizza **countertop, vector<Client *> clients, mutex *mutexWriter, condition_variable *cv);
+	Waiter(int numb, mutex *mutexCountertop, Pizza **countertop, vector<Client *> clients, mutex *mutexWriter,
+		   condition_variable *cv);
 
 	~Waiter();
 
@@ -39,7 +40,11 @@ private:
 
 	bool pizzasAvailable(int counterSize);
 
+	void printPizzasReadyToDeliver(int counterSize);
+
+
 	void takePizza(int counterSize);
+
 	void deliverPizza();
 };
 
