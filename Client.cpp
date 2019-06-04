@@ -3,8 +3,7 @@
 #include "Chair.h"
 
 Client::Client(int numb, mutex *mutexChairs, vector<Chair *> *chairs, mutex *mutexOrdersList,
-			   vector<Order *> *ordersList,
-			   mutex *mutexWriter, vector<Client *> *otherClients) :
+			   vector<Order *> *ordersList, mutex *mutexWriter, vector<Client *> *otherClients) :
 		numb(numb), mutexOrdersList(mutexOrdersList), ordersList(ordersList), mutexChairs(mutexChairs), chairs(chairs),
 		mutexWriter(mutexWriter), otherClients(otherClients) {
 	threadC = new thread(&Client::threadClient, this);
@@ -32,12 +31,16 @@ void Client::printChairs() {
 
 	mvprintw(25, 50, "Krzesla");
 	for(int j = 0; j < chairs->size(); j++) {
-		if(chairs->at(j)->getClientType() != -1 && has_colors()) {
-			auto _color = chairs->at(j)->getClientType() ? 3 : 4;
+		if(chairs->at(j)->getClientType() != -1) {
+			if(has_colors()) {
+				auto _color = chairs->at(j)->getClientType() ? 3 : 4;
 
-			attron(COLOR_PAIR(_color));
-			mvprintw(26, 50 + 3 * j, "%2d", chairs->at(j)->getClientNumber());
-			attroff(COLOR_PAIR(_color));
+				attron(COLOR_PAIR(_color));
+				mvprintw(26, 50 + 3 * j, "%2d", chairs->at(j)->getClientNumber());
+				attroff(COLOR_PAIR(_color));
+			} else {
+				mvprintw(26, 50 + 3 * j, "%2d", chairs->at(j)->getClientNumber());
+			}
 		} else {
 			mvprintw(26, 50 + 3 * j, "__");
 		}
