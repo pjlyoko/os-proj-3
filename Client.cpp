@@ -1,4 +1,3 @@
-//#include <utility>
 #include "Client.h"
 #include "Chair.h"
 
@@ -202,10 +201,10 @@ void Client::leaveImmediately() {
 		mvprintw(10 + numb, 11, "                                 ");
 		if(has_colors()) {
 			attron(COLOR_PAIR(2));
-			mvprintw(10 + numb, 11, "WYCHODZI Z HUKIEM");
+			mvprintw(10 + numb, 11, "        WYCHODZI Z HUKIEM        ");
 			attroff(COLOR_PAIR(2));
 		} else {
-			mvprintw(10 + numb, 11, "WYCHODZI Z HUKIEM");
+			mvprintw(10 + numb, 11, "        WYCHODZI Z HUKIEM        ");
 		}
 	}
 
