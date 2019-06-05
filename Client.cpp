@@ -193,6 +193,13 @@ void Client::leave() {
 
 		printChairs();
 	}
+
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(10 + numb, 0, "Klient %2d: oczekiwanie na nowego klienta    ", numb);
+	}
+
+	usleep(3 * breaks);
 }
 
 void Client::leaveImmediately() {

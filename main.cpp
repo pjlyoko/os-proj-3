@@ -67,6 +67,8 @@ int main() {
 		tools.push_back(new Tool());
 	}
 
+	// TODO: Tworzenie kolejki na pizze do włożenia do pieca
+
 	// TODO: Tworzenie pieców
 	int furnace[5]{
 			2, 2, 2, 2, 2

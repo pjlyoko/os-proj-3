@@ -142,22 +142,21 @@ void Pizzaiolo::bakePizza(int pizzaSize, float bakeTime, int furnacesSize) {
 	int haveFurnace = false;
 
 	while(!haveFurnace) {
-		mutexFurnaces->lock();
+		{
+			unique_lock<mutex> lk(*mutexFurnaces);
 
-		for(int i = 0; i < furnacesSize; i++) {
-			if(furnaces[i] >= pizzaSize) {
-				haveFurnace = true;
-				furnaces[i] -= pizzaSize;
-				furnaceUsed = i;
+			for(int i = 0; i < furnacesSize; i++) {
+				if(furnaces[i] >= pizzaSize) {
+					haveFurnace = true;
+					furnaces[i] -= pizzaSize;
+					furnaceUsed = i;
 
-				printFurnacesStatus(furnacesSize);
-
-				mutexFurnaces->unlock();
-				break;
+					printFurnacesStatus(furnacesSize);
+					
+					break;
+				}
 			}
 		}
-
-		mutexFurnaces->unlock();
 
 		if(haveFurnace) {
 			break;
