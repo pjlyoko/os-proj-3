@@ -22,7 +22,7 @@ add_executable(SO2
         Pizza.cpp
         Pizza.h
         Waiter.cpp
-        Waiter.h Chair.cpp Chair.h)
+        Waiter.h Chair.cpp Chair.h Tool.cpp Tool.h)
 
 target_link_libraries(SO2 ${CURSES_LIBRARIES})
 target_link_libraries(SO2 Threads::Threads)

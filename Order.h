@@ -7,8 +7,6 @@ class Order {
 public:
 	Order(int c, int s, const std::vector<int> &ing);
 
-	~Order();
-
 	std::vector<int> getIngredients();
 
 	int getClient();

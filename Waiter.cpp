@@ -1,5 +1,3 @@
-#include <utility>
-
 #include "Waiter.h"
 
 Waiter::Waiter(int numb, mutex *mutexCountertop, Pizza **countertop, vector<Client *> clients, mutex *mutexWriter,

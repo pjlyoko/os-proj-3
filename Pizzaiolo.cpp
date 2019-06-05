@@ -2,22 +2,12 @@
 
 Pizzaiolo::Pizzaiolo(int numb, mutex *mutexOrdersList, vector<Order *> *ordersList,
 					 condition_variable *cvClientMadeAnOrder, mutex *mutexFridge, int *fridge,
-					 mutex *mutexTools, bool *tools, mutex *mutexFurnaces, int *furnace, mutex *mutexCountertop,
-					 Pizza **countertop, mutex *mutexWriter, condition_variable *cv) : numb(numb),
-																					   mutexOrdersList(mutexOrdersList),
-																					   ordersList(ordersList),
-																					   cvClientMadeAnOrder(
-																							   cvClientMadeAnOrder),
-																					   mutexFridge(mutexFridge),
-																					   fridge(fridge),
-																					   mutexTools(mutexTools),
-																					   tools(tools),
-																					   mutexFurnaces(mutexFurnaces),
-																					   furnaces(furnace),
-																					   mutexCountertop(mutexCountertop),
-																					   countertop(countertop),
-																					   mutexWriter(mutexWriter),
-																					   cv(cv) {
+					 mutex *mutexTools, vector<Tool *> *tools, mutex *mutexFurnaces, int *furnace,
+					 mutex *mutexCountertop, Pizza **countertop, mutex *mutexWriter, condition_variable *cv) :
+		numb(numb), mutexOrdersList(mutexOrdersList), ordersList(ordersList), cvClientMadeAnOrder(
+		cvClientMadeAnOrder), mutexFridge(mutexFridge), fridge(fridge), mutexTools(mutexTools), tools(tools),
+		mutexFurnaces(mutexFurnaces), furnaces(furnace), mutexCountertop(mutexCountertop), countertop(countertop),
+		mutexWriter(mutexWriter), cv(cv) {
 	threadC = new thread(&Pizzaiolo::threadStart, this);
 }
 
@@ -63,7 +53,7 @@ void Pizzaiolo::takeIngredients(int fridgeSize) {
 	ingredients.clear();
 }
 
-void Pizzaiolo::takeTool(int toolsSize) {
+void Pizzaiolo::takeTool() {
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
 		mvprintw(numb, 13, "Podnosi narzedzie             ");
@@ -75,18 +65,18 @@ void Pizzaiolo::takeTool(int toolsSize) {
 		{
 			unique_lock<mutex> lk(*mutexTools);
 
-			for(int i = 0; i < toolsSize; i++) {
-				if(tools[i]) {
-					tools[i] = false;
+			for(int i = 0; i < tools->size(); i++) {
+				if(!tools->at(i)->isTaken()) {
+					tools->at(i)->take(numb);
 					hasTool = true;
 
-					toolTaken = i;
+					toolTaken = tools->at(i);
 
 					{
 						unique_lock<mutex> lk_write(*mutexWriter);
 						mvprintw(10, 50, "Narzedzia");
-						for(int j = 0; j < toolsSize; j++) {
-							mvprintw(11, 50 + 3 * j, "%d", (int) tools[j]);
+						for(int j = 0; j < tools->size(); j++) {
+							mvprintw(11, 50 + 3 * j, "%d", tools->at(j)->isTaken() ? 0 : 1);
 						}
 					}
 
@@ -119,7 +109,7 @@ void Pizzaiolo::preparePizza(float preparingTime) {
 	}
 }
 
-void Pizzaiolo::returnTool(int toolsSize) {
+void Pizzaiolo::returnTool() {
 	{
 		unique_lock<mutex> lk_write(*mutexWriter);
 		mvprintw(numb, 13, "Odklada narzedzia             ");
@@ -129,17 +119,18 @@ void Pizzaiolo::returnTool(int toolsSize) {
 
 	{
 		unique_lock<mutex> lk_tools(*mutexTools);
-		tools[toolTaken] = true;
-		toolTaken = -1;
-	}
+		toolTaken->leave();
+		toolTaken = nullptr;
 
-	{
-		unique_lock<mutex> lk_write(*mutexWriter);
-		mvprintw(10, 50, "Narzedzia");
-		for(int j = 0; j < toolsSize; j++) {
-			mvprintw(11, 50 + 3 * j, "%d", (int) tools[j]);
+		{
+			unique_lock<mutex> lk_write(*mutexWriter);
+			mvprintw(10, 50, "Narzedzia");
+			for(int j = 0; j < tools->size(); j++) {
+				mvprintw(11, 50 + 3 * j, "%d", tools->at(j)->isTaken() ? 0 : 1);
+			}
 		}
 	}
+
 }
 
 void Pizzaiolo::bakePizza(int pizzaSize, float bakeTime, int furnacesSize) {
@@ -280,7 +271,8 @@ void Pizzaiolo::threadStart() {
 					unique_lock<mutex> lk_write(*mutexWriter);
 					mvprintw(numb, 13, "Czeka na zamowienia           ");
 				}
-				cvClientMadeAnOrder->wait(lk);
+//				cvClientMadeAnOrder->wait(lk);
+				cvClientMadeAnOrder->wait(lk, [&] { return !ordersList->empty(); }); //TODO: Można tak?
 			}
 
 			order = ordersList->front();
@@ -314,13 +306,13 @@ void Pizzaiolo::threadStart() {
 		takeIngredients(fridgeSize);
 
 		// Wzięcie narzędzi
-		takeTool(toolsSize);
+		takeTool();
 
 		// Przygotowanie pizzy
 		preparePizza(preparingTime);
 
 		// Odłożenie narzędzi
-		returnTool(toolsSize);
+		returnTool();
 
 		// Pieczenie pizzy
 		bakePizza(pizzaSize, bakeTime, furnacesSize);

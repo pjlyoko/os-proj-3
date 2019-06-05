@@ -3,6 +3,7 @@
 #include "Waiter.h"
 #include "Pizza.h"
 #include "Chair.h"
+#include "Tool.h"
 #include <vector>
 #include <iostream>
 #include <thread>
@@ -46,28 +47,35 @@ int main() {
 		windowResizeHandler(0);
 	}
 
-
 	vector<Pizzaiolo *> pizzaiolos;
 	vector<Client *> clients;
 	vector<Waiter *> waiters;
 	vector<Order *> ordersList;
+
 	vector<Chair *> chairs;
+	vector<Tool *> tools;
 	condition_variable cv, cvClientMadeAnOrder;
 
-
 	mutex mutexOrdersList, mutexFridge, mutexTools, mutexFurnaces, mutexCountertop, mutexChairs, mutexWriter;
+
+	// TODO: Tworzenie lodówki
 	int fridge[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	bool tools[4]{
-			true, true, true, true
-	};
+
+	// Tworzenie krzeseł
+	tools.reserve(3);
+	for(int i = 0; i < 3; i++) {
+		tools.push_back(new Tool());
+	}
+
+	// TODO: Tworzenie pieców
 	int furnace[5]{
 			2, 2, 2, 2, 2
 	};
 
+	// TODO: Tworzenie blatu na gotowe do wydania pizze
 	Pizza *countertop[10]{
 			nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr
 	};
-
 
 
 	// Tworzenie krzeseł
@@ -76,7 +84,7 @@ int main() {
 		chairs.push_back(new Chair());
 	}
 
-	// Tworzenie klientów
+	// Tworzenie wątków klientów
 	clients.reserve(11);
 	for(int i = 0; i < 11; i++) {
 		clients.push_back(
@@ -84,12 +92,12 @@ int main() {
 						   &clients));
 	}
 
-	// Tworzenie pizzaiolo
-	pizzaiolos.reserve(5);
-	for(int i = 0; i < 5; i++) {
+	// Tworzenie wątków pizzaiolo
+	pizzaiolos.reserve(4);
+	for(int i = 0; i < 4; i++) {
 		pizzaiolos.push_back(
 				new Pizzaiolo(i, &mutexOrdersList, &ordersList, &cvClientMadeAnOrder, &mutexFridge, fridge, &mutexTools,
-							  tools, &mutexFurnaces, furnace, &mutexCountertop, countertop, &mutexWriter, &cv));
+							  &tools, &mutexFurnaces, furnace, &mutexCountertop, countertop, &mutexWriter, &cv));
 	}
 
 	// Tworzenie kelnerów
