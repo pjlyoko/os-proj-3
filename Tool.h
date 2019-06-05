@@ -16,7 +16,7 @@ public:
 
 	void leave();
 private:
-	std::atomic<bool> taken;
+	std::atomic<bool> taken{};
 	int pizzaioloNo = -1;
 };
 

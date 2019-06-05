@@ -1,7 +1,7 @@
-#include <vector>
-
 #ifndef ORDER_H
 #define ORDER_H
+
+#include <vector>
 
 class Order {
 public:
@@ -21,4 +21,3 @@ private:
 };
 
 #endif /* ORDER_H */
-

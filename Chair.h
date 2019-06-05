@@ -1,3 +1,6 @@
+#ifndef CHAIR_H
+#define CHAIR_H
+
 class Client;
 
 class Chair {
@@ -15,3 +18,5 @@ public:
 private:
 	Client *client = nullptr;
 };
+
+#endif /* CHAIR_H */
