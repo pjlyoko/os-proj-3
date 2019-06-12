@@ -5,8 +5,6 @@ class Pizza {
 public:
 	explicit Pizza(int c);
 
-    ~Pizza();
-
     int getClient();
 
 private:

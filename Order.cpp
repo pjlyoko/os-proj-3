@@ -6,8 +6,6 @@ Order::Order(int c, int s, const std::vector<int> &ing) : client(c), size(s) {
 	}
 }
 
-Order::~Order() = default;
-
 std::vector<int> Order::getIngredients() {
 	return ingredients;
 }

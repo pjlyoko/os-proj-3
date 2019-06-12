@@ -1,10 +1,12 @@
-//#include <utility>
 #include "Client.h"
 #include "Chair.h"
 
-Client::Client(int numb, mutex *mutexChairs, vector<Chair *> *chairs, mutex *mutexOrdersList,
-			   vector<Order *> *ordersList, mutex *mutexWriter, vector<Client *> *otherClients) :
-		numb(numb), mutexOrdersList(mutexOrdersList), ordersList(ordersList), mutexChairs(mutexChairs), chairs(chairs),
+Client::Client(int numb, mutex *mutexChairs, vector<Chair *> *chairs,
+			   mutex *mutexOrdersList, vector<Order *> *ordersList, condition_variable *cvClientMadeAnOrder,
+			   mutex *mutexWriter,
+			   vector<Client *> *otherClients) :
+		numb(numb), mutexOrdersList(mutexOrdersList), ordersList(ordersList), cvClientMadeAnOrder(cvClientMadeAnOrder),
+		mutexChairs(mutexChairs), chairs(chairs),
 		mutexWriter(mutexWriter), otherClients(otherClients) {
 	threadC = new thread(&Client::threadClient, this);
 }
@@ -14,22 +16,10 @@ Client::~Client() {
 	delete threadC;
 }
 
-void Client::print_queue(queue<Order *> q) {
-	int i = 0;
-	auto *que = new queue<Order *>(std::move(q));
-	while(!que->empty()) {
-		mvprintw(1, 50 + 3 * i, "%d", que->front()->getClient());
-		i++;
-		que->pop();
-	}
-	delete que;
-
-}
-
 void Client::printChairs() {
 	unique_lock<mutex> lk_write(*mutexWriter);
 
-	mvprintw(25, 50, "Krzesla");
+	mvprintw(25, 50, "Krzesla typu filozof");
 	for(int j = 0; j < chairs->size(); j++) {
 		if(chairs->at(j)->getClientType() != -1) {
 			if(has_colors()) {
@@ -45,7 +35,6 @@ void Client::printChairs() {
 			mvprintw(26, 50 + 3 * j, "__");
 		}
 	}
-
 }
 
 void Client::takeASeat() {
@@ -125,7 +114,7 @@ void Client::makeOrder() {
 	{
 		unique_lock<mutex> lk(*mutexOrdersList);
 
-		ingredients.push_back(0); //ciasto i inne składniki
+		ingredients.push_back(0); // Składniki
 		int numberOfIngredients = random() % 4 + 3;
 		for(int i = 1; i < numberOfIngredients; i++) {
 			ingredients.push_back(random() % 9 + 1);
@@ -148,6 +137,7 @@ void Client::makeOrder() {
 			}
 		}
 	}
+	cvClientMadeAnOrder->notify_one();
 }
 
 void Client::waitForDelivery() {
@@ -203,6 +193,13 @@ void Client::leave() {
 
 		printChairs();
 	}
+
+	{
+		unique_lock<mutex> lk_write(*mutexWriter);
+		mvprintw(10 + numb, 0, "Klient %2d: oczekiwanie na nowego klienta    ", numb);
+	}
+
+	usleep(3 * breaks);
 }
 
 void Client::leaveImmediately() {
@@ -211,10 +208,10 @@ void Client::leaveImmediately() {
 		mvprintw(10 + numb, 11, "                                 ");
 		if(has_colors()) {
 			attron(COLOR_PAIR(2));
-			mvprintw(10 + numb, 11, "WYCHODZI Z HUKIEM");
+			mvprintw(10 + numb, 11, "        WYCHODZI Z HUKIEM        ");
 			attroff(COLOR_PAIR(2));
 		} else {
-			mvprintw(10 + numb, 11, "WYCHODZI Z HUKIEM");
+			mvprintw(10 + numb, 11, "        WYCHODZI Z HUKIEM        ");
 		}
 	}
 
@@ -236,21 +233,22 @@ void Client::threadClient() {
 
 		usleep(breaks);
 
-		//Siadanie
+		// Zajęcie miejsca
 		takeASeat();
 
+		// Jeśli klient się zdenerwował, opuszcza lokal w trybie now.
 		if(oughtToLeave) {
 			leaveImmediately();
 			continue;
 		}
 
-		//Składanie zamówienia
+		// Składanie zamówienia
 		makeOrder();
 
-		//Czekanie
+		// Oczekiwanie
 		waitForDelivery();
 
-		//Jedzenie
+		// Posiłek
 		eat();
 
 		// Wychodzenie

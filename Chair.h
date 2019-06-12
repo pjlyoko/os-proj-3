@@ -1,5 +1,5 @@
-#ifndef SO2_CHAIR_H
-#define SO2_CHAIR_H
+#ifndef CHAIR_H
+#define CHAIR_H
 
 class Client;
 
@@ -19,5 +19,4 @@ private:
 	Client *client = nullptr;
 };
 
-
-#endif //SO2_CHAIR_H
+#endif /* CHAIR_H */

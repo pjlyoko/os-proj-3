@@ -1,13 +1,11 @@
-#include <vector>
-
 #ifndef ORDER_H
 #define ORDER_H
+
+#include <vector>
 
 class Order {
 public:
 	Order(int c, int s, const std::vector<int> &ing);
-
-	~Order();
 
 	std::vector<int> getIngredients();
 
@@ -23,4 +21,3 @@ private:
 };
 
 #endif /* ORDER_H */
-
